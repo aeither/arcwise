@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Receipt } from "lucide-react";
+import { Plus, Receipt, History } from "lucide-react";
 import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { BalanceSummary } from "@/components/BalanceSummary";
+import { SettlementHistory, Settlement } from "@/components/SettlementHistory";
+import { WalletButton } from "@/components/WalletButton";
 import { useToast } from "@/hooks/use-toast";
 
 interface Expense {
@@ -23,8 +25,16 @@ interface Balance {
 
 const INITIAL_PEOPLE = ["Alice", "Bob", "Charlie"];
 
+// Demo wallet addresses - in production, users would add these themselves
+const DEMO_WALLET_ADDRESSES: Record<string, string> = {
+  Alice: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  Bob: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
+  Charlie: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
+};
+
 const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const [previousBalanceCount, setPreviousBalanceCount] = useState(0);
@@ -107,6 +117,19 @@ const Index = () => {
     });
   };
 
+  const handleSettle = (from: string, to: string, amount: number, txHash: string, chain: string) => {
+    const newSettlement: Settlement = {
+      id: Date.now().toString(),
+      from,
+      to,
+      amount,
+      txHash,
+      chain,
+      timestamp: new Date(),
+    };
+    setSettlements([newSettlement, ...settlements]);
+  };
+
   const balances = calculateBalances();
 
   // Celebrate when all balances settle
@@ -125,25 +148,28 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <header className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 SplitSimple
               </h1>
-              <p className="text-muted-foreground mt-1">Split expenses with friends, easily</p>
+              <p className="text-muted-foreground mt-1">Split expenses with friends, settle with crypto</p>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <Button
-                onClick={() => setIsDialogOpen(true)}
-                size="lg"
-                className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Add Expense
-              </Button>
-              <span className="text-xs text-muted-foreground hidden sm:block">
-                ⌘N or Ctrl+N
-              </span>
+            <div className="flex items-center gap-3">
+              <WalletButton />
+              <div className="flex flex-col items-end gap-2">
+                <Button
+                  onClick={() => setIsDialogOpen(true)}
+                  size="lg"
+                  className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Add Expense
+                </Button>
+                <span className="text-xs text-muted-foreground hidden sm:block">
+                  ⌘N or Ctrl+N
+                </span>
+              </div>
             </div>
           </div>
         </header>
@@ -179,8 +205,21 @@ const Index = () => {
             )}
           </div>
 
-          <div className="md:col-span-1">
-            <BalanceSummary balances={balances} />
+          <div className="md:col-span-1 space-y-4">
+            <BalanceSummary 
+              balances={balances} 
+              onSettle={handleSettle}
+              walletAddresses={DEMO_WALLET_ADDRESSES}
+            />
+            {settlements.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <History className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Settlements</h2>
+                </div>
+                <SettlementHistory settlements={settlements} />
+              </div>
+            )}
           </div>
         </div>
       </div>
