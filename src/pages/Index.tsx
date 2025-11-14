@@ -6,6 +6,7 @@ import { ExpenseCard } from "@/components/ExpenseCard";
 import { BalanceSummary } from "@/components/BalanceSummary";
 import { SettlementHistory, Settlement } from "@/components/SettlementHistory";
 import { WalletButton } from "@/components/WalletButton";
+import { BridgeButton } from "@/components/BridgeButton";
 import { useToast } from "@/hooks/use-toast";
 
 interface Expense {
@@ -156,6 +157,7 @@ const Index = () => {
               <p className="text-muted-foreground mt-1">Split expenses with friends, settle with crypto</p>
             </div>
             <div className="flex items-center gap-3">
+              <BridgeButton />
               <WalletButton />
               <div className="flex flex-col items-end gap-2">
                 <Button
