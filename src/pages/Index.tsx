@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Receipt } from "lucide-react";
 import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { BalanceSummary } from "@/components/BalanceSummary";
+import { useToast } from "@/hooks/use-toast";
 
 interface Expense {
   id: string;
@@ -25,6 +26,21 @@ const INITIAL_PEOPLE = ["Alice", "Bob", "Charlie"];
 const Index = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const [previousBalanceCount, setPreviousBalanceCount] = useState(0);
+
+  // Keyboard shortcut to open add expense dialog
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
+        e.preventDefault();
+        setIsDialogOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
 
   const calculateBalances = (): Balance[] => {
     const balances: Record<string, number> = {};
@@ -83,9 +99,27 @@ const Index = () => {
       date: new Date(),
     };
     setExpenses([newExpense, ...expenses]);
+    
+    toast({
+      title: "Expense added! 🎉",
+      description: `${expenseData.paidBy} paid $${expenseData.amount.toFixed(2)} for ${expenseData.description}`,
+      duration: 3000,
+    });
   };
 
   const balances = calculateBalances();
+
+  // Celebrate when all balances settle
+  useEffect(() => {
+    if (previousBalanceCount > 0 && balances.length === 0 && expenses.length > 0) {
+      toast({
+        title: "All settled up! 🎉",
+        description: "Everyone's even now. Great job!",
+        duration: 4000,
+      });
+    }
+    setPreviousBalanceCount(balances.length);
+  }, [balances.length]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,14 +132,19 @@ const Index = () => {
               </h1>
               <p className="text-muted-foreground mt-1">Split expenses with friends, easily</p>
             </div>
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              size="lg"
-              className="shadow-medium hover:shadow-soft transition-all"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Add Expense
-            </Button>
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                onClick={() => setIsDialogOpen(true)}
+                size="lg"
+                className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Add Expense
+              </Button>
+              <span className="text-xs text-muted-foreground hidden sm:block">
+                ⌘N or Ctrl+N
+              </span>
+            </div>
           </div>
         </header>
 
@@ -116,17 +155,25 @@ const Index = () => {
               <h2 className="text-2xl font-semibold">Recent Expenses</h2>
             </div>
             {expenses.length === 0 ? (
-              <div className="text-center py-12 bg-muted/30 rounded-lg border-2 border-dashed border-border">
-                <Receipt className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No expenses yet</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Add your first expense to get started
+              <div className="text-center py-16 bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl border-2 border-dashed border-border animate-fade-in">
+                <Receipt className="h-16 w-16 mx-auto text-muted-foreground mb-4 animate-bounce-subtle" />
+                <p className="text-lg font-medium text-foreground mb-1">No expenses yet</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Start tracking by adding your first expense
                 </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsDialogOpen(true)}
+                  className="hover:scale-105 transition-transform"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add First Expense
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
-                {expenses.map((expense) => (
-                  <ExpenseCard key={expense.id} expense={expense} />
+                {expenses.map((expense, index) => (
+                  <ExpenseCard key={expense.id} expense={expense} index={index} />
                 ))}
               </div>
             )}

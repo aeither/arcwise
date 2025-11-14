@@ -35,11 +35,20 @@ export function AddExpenseDialog({ open, onOpenChange, people, onAddExpense }: A
       splitBetween,
     });
 
+    // Reset form
     setDescription("");
     setAmount("");
     setPaidBy("");
     setSplitBetween(people);
     onOpenChange(false);
+  };
+
+  // Auto-select all people when dialog opens
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setSplitBetween(people);
+    }
+    onOpenChange(open);
   };
 
   const togglePerson = (person: string) => {
@@ -49,8 +58,8 @@ export function AddExpenseDialog({ open, onOpenChange, people, onAddExpense }: A
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md animate-scale-in">
         <DialogHeader>
           <DialogTitle>Add Expense</DialogTitle>
         </DialogHeader>
@@ -116,7 +125,11 @@ export function AddExpenseDialog({ open, onOpenChange, people, onAddExpense }: A
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button 
+            type="submit" 
+            className="w-full transition-all hover:scale-[1.02]"
+            disabled={!description || !amount || !paidBy || splitBetween.length === 0}
+          >
             Add Expense
           </Button>
         </form>
