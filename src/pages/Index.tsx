@@ -152,7 +152,7 @@ const Index = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                SplitSimple
+                ArcWise
               </h1>
               <p className="text-muted-foreground mt-1">Split expenses with friends, settle with crypto</p>
             </div>
@@ -168,9 +168,6 @@ const Index = () => {
                   <Plus className="h-5 w-5 mr-2" />
                   Add Expense
                 </Button>
-                <span className="text-xs text-muted-foreground hidden sm:block">
-                  ⌘N or Ctrl+N
-                </span>
               </div>
             </div>
           </div>
