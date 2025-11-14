@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Header } from '@/components/Header';
 import { AlertCircle, ArrowLeftRight, CheckCircle, ExternalLink, Loader2, RefreshCw, Zap, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
@@ -252,16 +253,19 @@ export default function Bridge() {
 
   if (!isConnected) {
     return (
-      <div className="container mx-auto py-12 px-4">
-        <Card className="max-w-md mx-auto text-center">
-          <CardHeader>
-            <ArrowLeftRight size={48} className="mx-auto mb-4 text-muted-foreground" />
-            <CardTitle className="text-xl">Connect Your Wallet</CardTitle>
-            <CardDescription>
-              Connect your wallet to bridge USDC to Arc Testnet
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto py-12 px-4">
+          <Card className="max-w-md mx-auto text-center">
+            <CardHeader>
+              <ArrowLeftRight size={48} className="mx-auto mb-4 text-muted-foreground" />
+              <CardTitle className="text-xl">Connect Your Wallet</CardTitle>
+              <CardDescription>
+                Connect your wallet to bridge USDC to Arc Testnet
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -269,8 +273,10 @@ export default function Bridge() {
   const cheapestEstimate = costEstimates.find(e => e.chainId === sourceChainId && !e.error);
 
   return (
-    <div className="container mx-auto py-12 px-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto py-12 px-4">
+        <div className="max-w-md mx-auto">
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Bridge USDC to Arc Testnet</CardTitle>
@@ -655,6 +661,7 @@ export default function Bridge() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

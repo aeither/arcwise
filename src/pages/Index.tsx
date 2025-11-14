@@ -1,10 +1,9 @@
 import { AddExpenseDialog } from "@/components/AddExpenseDialog";
 import { BalanceSummary } from "@/components/BalanceSummary";
-import { BridgeButton } from "@/components/BridgeButton";
 import { ExpenseCard } from "@/components/ExpenseCard";
+import { Header } from "@/components/Header";
 import { Settlement, SettlementHistory } from "@/components/SettlementHistory";
 import { Button } from "@/components/ui/button";
-import { WalletButton } from "@/components/WalletButton";
 import { useToast } from "@/hooks/use-toast";
 import { History, Plus, Receipt } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -147,31 +146,18 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header>
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          size="lg"
+          className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Add Expense
+        </Button>
+      </Header>
+
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <header className="mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                ArcWise
-              </h1>
-              <p className="text-muted-foreground mt-1">Split expenses with friends, settle with crypto</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <BridgeButton />
-              <WalletButton />
-              <div className="flex flex-col items-end gap-2">
-                <Button
-                  onClick={() => setIsDialogOpen(true)}
-                  size="lg"
-                  className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
-                >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Add Expense
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <div className="md:col-span-2 space-y-4">
