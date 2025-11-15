@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# ArcWise
 
-## Project info
+Split expenses and move USDC seamlessly across blockchain networks.
 
-**URL**: https://lovable.dev/projects/c563e115-8361-463c-9343-5cff808fc83b
+## Features
 
-## How can I edit this code?
+### Expense Splitting
+Track shared expenses and calculate who owes what. Settle debts with on-chain USDC transfers across multiple networks.
 
-There are several ways of editing your application.
+### Cross-Chain USDC Bridge
+Transfer USDC between supported testnet chains to Arc Testnet using Circle's Bridge Kit:
+- Ethereum Sepolia → Arc Testnet
+- Base Sepolia → Arc Testnet
+- Arbitrum Sepolia → Arc Testnet
 
-**Use Lovable**
+Features include:
+- Automatic cheapest route finder
+- Fee estimation across all routes
+- Send to different wallet addresses
+- Real-time balance tracking
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c563e115-8361-463c-9343-5cff808fc83b) and start prompting.
+### Circle Smart Account
+Create a smart account using your device's biometric authentication (Face ID, Touch ID, Windows Hello):
+- No seed phrases or private keys
+- Gasless USDC transfers on Base Sepolia
+- Secured by passkey technology
 
-Changes made via Lovable will be committed automatically to this repo.
+### Farcaster Integration
+Resolve Ethereum addresses using Farcaster usernames for easier transfers.
 
-**Use your preferred IDE**
+## Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Install dependencies:
+```bash
+npm install
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Create a `.env` file with your API keys:
+```bash
+# Farcaster username resolution
+VITE_NEYNAR_API_KEY=your_neynar_api_key
 
-Follow these steps:
+# Circle Smart Account (optional)
+VITE_CLIENT_KEY=your_circle_client_key
+VITE_CLIENT_URL=https://modular-sdk.circle.com/v1/rpc/w3s/buidl
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Get API keys:
+- **Neynar**: https://neynar.com
+- **Circle**: https://console.circle.com/modular-wallets
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Development
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Start the dev server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Build for production:
+```bash
+npm run build
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Tech Stack
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c563e115-8361-463c-9343-5cff808fc83b) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- React + TypeScript + Vite
+- Circle Bridge Kit - Cross-chain USDC transfers
+- Circle Modular Wallets - Passkey-based smart accounts
+- RainbowKit + Wagmi - Wallet connections
+- Shadcn UI + Tailwind CSS - Interface

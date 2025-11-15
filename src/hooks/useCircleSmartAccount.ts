@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { createPublicClient, parseUnits, type Hex } from 'viem'
-import { polygonAmoy } from 'viem/chains'
+import { createPublicClient, parseUnits, formatUnits, type Hex, erc20Abi } from 'viem'
+import { baseSepolia } from 'viem/chains'
 import {
   type P256Credential,
   type SmartAccount,
@@ -25,18 +25,19 @@ const USDC_DECIMALS = 6
 
 // Create Circle transports
 const passkeyTransport = toPasskeyTransport(clientUrl, clientKey)
-const modularTransport = toModularTransport(`${clientUrl}/polygonAmoy`, clientKey)
+const modularTransport = toModularTransport(`${clientUrl}/baseSepolia`, clientKey)
 
 // Create a public client
 const client = createPublicClient({
-  chain: polygonAmoy,
+  chain: baseSepolia,
   transport: modularTransport,
 })
 
 // Create a bundler client with the modular transport
 const bundlerClient = createBundlerClient({
-  chain: polygonAmoy,
+  chain: baseSepolia,
   transport: modularTransport,
+  paymaster: true,
 })
 
 export interface CircleSmartAccountState {
@@ -54,6 +55,7 @@ export interface CircleSmartAccountActions {
   login: () => Promise<void>
   logout: () => void
   sendUSDC: (to: `0x${string}`, amount: string) => Promise<void>
+  checkUSDCBalance: () => Promise<string>
   clearTransaction: () => void
 }
 
@@ -164,7 +166,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
       // Create callData for USDC transfer
       const callData = encodeTransfer(
         to,
-        ContractAddress.PolygonAmoy_USDC,
+        ContractAddress.BaseSepolia_USDC,
         parseUnits(amount, USDC_DECIMALS)
       )
 
@@ -200,6 +202,26 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
     setError(null)
   }
 
+  const checkUSDCBalance = async (): Promise<string> => {
+    if (!account) {
+      throw new Error('No account connected')
+    }
+
+    try {
+      const balance = await client.readContract({
+        address: ContractAddress.BaseSepolia_USDC,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [account.address],
+      })
+
+      return formatUnits(balance as bigint, 6) // USDC has 6 decimals
+    } catch (err) {
+      console.error('Error checking USDC balance:', err)
+      throw err
+    }
+  }
+
   return {
     account,
     credential,
@@ -212,6 +234,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
     login,
     logout,
     sendUSDC,
+    checkUSDCBalance,
     clearTransaction,
   }
 }

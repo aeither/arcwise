@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ const CircleAccount = () => {
     login,
     logout,
     sendUSDC,
+    checkUSDCBalance,
     clearTransaction,
   } = useCircleSmartAccount()
 
@@ -31,6 +32,16 @@ const CircleAccount = () => {
   const [registerUsername, setRegisterUsername] = useState('')
   const [transferTo, setTransferTo] = useState('')
   const [transferAmount, setTransferAmount] = useState('')
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+
+  // Check USDC balance when account is available
+  useEffect(() => {
+    if (account) {
+      checkUSDCBalance()
+        .then(setUsdcBalance)
+        .catch(() => setUsdcBalance('0'))
+    }
+  }, [account, checkUSDCBalance])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,12 +115,25 @@ const CircleAccount = () => {
       return
     }
 
+    // Check if balance is sufficient
+    if (usdcBalance && parseFloat(usdcBalance) < 1) {
+      toast({
+        title: 'Insufficient USDC',
+        description: 'You need at least 1 USDC to send gasless transactions. Please fund your account from the Circle Faucet.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     try {
       await sendUSDC(transferTo as `0x${string}`, transferAmount)
       toast({
         title: 'Transfer successful!',
         description: `Sent ${transferAmount} USDC`,
       })
+      // Refresh balance
+      const newBalance = await checkUSDCBalance()
+      setUsdcBalance(newBalance)
       setTransferTo('')
       setTransferAmount('')
     } catch (err) {
@@ -265,7 +289,7 @@ const CircleAccount = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Your Smart Account</CardTitle>
-                    <CardDescription>Polygon Amoy Testnet</CardDescription>
+                    <CardDescription>Base Sepolia Testnet</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -297,17 +321,36 @@ const CircleAccount = () => {
                   </div>
                 </div>
 
-                <Alert>
+                <div>
+                  <Label className="text-sm text-muted-foreground">USDC Balance</Label>
+                  <p className="text-lg font-medium">
+                    {usdcBalance !== null ? `${usdcBalance} USDC` : 'Loading...'}
+                  </p>
+                  {usdcBalance && parseFloat(usdcBalance) < 1 && (
+                    <p className="text-sm text-orange-600 mt-1">
+                      ⚠️ Low balance! You need at least 1 USDC to send gasless transactions.
+                    </p>
+                  )}
+                </div>
+
+                <Alert className="border-orange-500 bg-orange-50">
                   <AlertDescription className="text-sm">
-                    <strong>Note:</strong> This is a testnet account on Polygon Amoy. Get free test USDC from the{' '}
-                    <a
-                      href="https://faucet.circle.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline"
-                    >
-                      Circle Faucet
-                    </a>
+                    <strong>⚠️ IMPORTANT:</strong> Before sending USDC, you must fund this account with test USDC:
+                    <ol className="mt-2 ml-4 list-decimal space-y-1">
+                      <li>Copy the account address above</li>
+                      <li>Go to <a
+                        href="https://faucet.circle.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline font-semibold"
+                      >
+                        Circle Faucet
+                      </a></li>
+                      <li>Select "Base Sepolia" network</li>
+                      <li>Paste your account address and request USDC</li>
+                      <li>Wait ~1 minute for the USDC to arrive</li>
+                    </ol>
+                    <p className="mt-2 font-semibold">You need at least 1 USDC to send gasless transactions!</p>
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -415,12 +458,12 @@ const CircleAccount = () => {
                         </Button>
                       </div>
                       <a
-                        href={`https://amoy.polygonscan.com/tx/${txHash}`}
+                        href={`https://sepolia.basescan.org/tx/${txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary underline mt-2 inline-block"
                       >
-                        View on PolygonScan →
+                        View on BaseScan →
                       </a>
                     </div>
                   )}
