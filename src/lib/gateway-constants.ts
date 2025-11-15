@@ -3,8 +3,8 @@
  * Based on Circle Gateway Quickstart guide
  */
 
-import { sepolia, baseSepolia } from 'viem/chains'
-import { Chain, createPublicClient, http, getContract } from 'viem'
+import { sepolia, baseSepolia, arcTestnet } from 'viem/chains'
+import { Chain, createPublicClient, http } from 'viem'
 
 // Gateway API Base URL
 export const GATEWAY_API_BASE_URL = "https://gateway-api-testnet.circle.com/v1"
@@ -12,22 +12,25 @@ export const GATEWAY_API_BASE_URL = "https://gateway-api-testnet.circle.com/v1"
 // USDC token decimals
 export const USDC_DECIMALS = 6
 
-// Domain identifiers for CCTP
+// Domain identifiers for Circle Gateway
 // See https://developers.circle.com/cctp/supported-domains
 export const DOMAINS = {
-  ethereum: 0,
   sepolia: 0,
-  avalanche: 1,
   avalancheFuji: 1,
-  base: 6,
   baseSepolia: 6,
+  monadTestnet: 15,
+  starknetTestnet: 25,
+  arcTestnet: 26,
 } as const
 
-// Human-readable chain names by domain
+// Human-readable chain names by domain (testnets only)
 export const CHAINS_BY_DOMAIN: Record<number, string> = {
-  0: "Ethereum",
-  1: "Avalanche",
-  6: "Base",
+  0: "Ethereum Sepolia",
+  1: "Avalanche Fuji",
+  6: "Base Sepolia",
+  15: "Monad Testnet",
+  25: "Starknet Testnet",
+  26: "Arc Testnet",
 }
 
 // Contract addresses for Gateway
@@ -38,6 +41,7 @@ export const GATEWAY_MINTER_ADDRESS = "0x000000000000000000000000000000000000000
 export const USDC_ADDRESSES = {
   sepolia: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" as `0x${string}`,
   baseSepolia: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as `0x${string}`,
+  arcTestnet: "0x3600000000000000000000000000000000000000" as `0x${string}`,
   // Add more chains as needed
 } as const
 
@@ -50,6 +54,7 @@ export interface GatewayChainConfig {
   usdcAddress: `0x${string}`
   gatewayWalletAddress: `0x${string}`
   blockExplorerUrl: string
+  supportsGateway: boolean // Whether this chain is supported by Circle Gateway API
 }
 
 export const SUPPORTED_CHAINS: GatewayChainConfig[] = [
@@ -61,6 +66,7 @@ export const SUPPORTED_CHAINS: GatewayChainConfig[] = [
     usdcAddress: USDC_ADDRESSES.sepolia,
     gatewayWalletAddress: GATEWAY_WALLET_ADDRESS,
     blockExplorerUrl: "https://sepolia.etherscan.io",
+    supportsGateway: true,
   },
   {
     chain: baseSepolia,
@@ -70,6 +76,17 @@ export const SUPPORTED_CHAINS: GatewayChainConfig[] = [
     usdcAddress: USDC_ADDRESSES.baseSepolia,
     gatewayWalletAddress: GATEWAY_WALLET_ADDRESS,
     blockExplorerUrl: "https://sepolia.basescan.org",
+    supportsGateway: true,
+  },
+  {
+    chain: arcTestnet,
+    name: "Arc Testnet",
+    domain: DOMAINS.arcTestnet,
+    currency: "ETH",
+    usdcAddress: USDC_ADDRESSES.arcTestnet,
+    gatewayWalletAddress: GATEWAY_WALLET_ADDRESS,
+    blockExplorerUrl: "https://testnet.arcscan.app",
+    supportsGateway: true, // Arc Testnet is officially supported (Domain 26)
   },
 ]
 

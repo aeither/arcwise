@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
-import { parseUnits, formatUnits, erc20Abi, getContract, type Hash } from 'viem'
+import { parseUnits, formatUnits, erc20Abi, getContract, type Hash, createPublicClient, http } from 'viem'
 import {
   GatewayClient,
   type ChainBalance,
@@ -14,12 +14,17 @@ import {
   SUPPORTED_CHAINS,
   USDC_DECIMALS,
   getChainConfigByDomain,
+  createChainClient,
   type GatewayChainConfig,
 } from '@/lib/gateway-constants'
 import { gatewayWalletAbi, gatewayMinterAbi } from '@/lib/gateway-abis'
 
+export interface ChainBalanceWithWallet extends ChainBalance {
+  walletBalance?: string
+}
+
 export interface GatewayState {
-  balances: ChainBalance[]
+  balances: ChainBalanceWithWallet[]
   totalBalance: string
   isLoading: boolean
   error: string | null
@@ -45,7 +50,7 @@ export function useGateway() {
    * Fetch balances across all supported chains
    */
   const fetchBalances = useCallback(async () => {
-    if (!address) {
+    if (!address || !publicClient) {
       setState(prev => ({ ...prev, balances: [], totalBalance: '0' }))
       return
     }
@@ -53,16 +58,64 @@ export function useGateway() {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     try {
-      const { balances } = await gatewayClient.balances('USDC', address)
+      // Only fetch Gateway API balances for chains that support it
+      const chainsWithGateway = SUPPORTED_CHAINS.filter(c => c.supportsGateway)
+      const gatewayDomains = chainsWithGateway.map(c => c.domain)
 
-      // Calculate total balance
-      const total = balances.reduce((sum, current) => {
+      let gatewayBalances: ChainBalance[] = []
+
+      // Only call Gateway API if there are chains that support it
+      if (gatewayDomains.length > 0) {
+        try {
+          const response = await gatewayClient.balances('USDC', address, gatewayDomains)
+          gatewayBalances = response.balances
+        } catch (err) {
+          console.error('Error fetching Gateway balances:', err)
+          // Continue without Gateway balances - just show wallet balances
+        }
+      }
+
+      // Fetch wallet balances for all supported chains
+      const balancesWithWallet: ChainBalanceWithWallet[] = await Promise.all(
+        SUPPORTED_CHAINS.map(async (chainConfig) => {
+          const gatewayBalance = gatewayBalances.find(b => b.domain === chainConfig.domain)
+
+          // Fetch wallet balance from the chain
+          let walletBalance = '0'
+          try {
+            const chainClient = createPublicClient({
+              chain: chainConfig.chain,
+              transport: http(),
+            })
+
+            const balance = await chainClient.readContract({
+              address: chainConfig.usdcAddress,
+              abi: erc20Abi,
+              functionName: 'balanceOf',
+              args: [address],
+            })
+
+            walletBalance = formatUnits(balance as bigint, USDC_DECIMALS)
+          } catch (err) {
+            console.error(`Error fetching wallet balance for ${chainConfig.name}:`, err)
+          }
+
+          return {
+            domain: chainConfig.domain,
+            balance: gatewayBalance?.balance || '0',
+            walletBalance,
+          }
+        })
+      )
+
+      // Calculate total Gateway balance (only for chains that support Gateway)
+      const total = balancesWithWallet.reduce((sum, current) => {
         return sum + parseFloat(current.balance)
       }, 0)
 
       setState(prev => ({
         ...prev,
-        balances,
+        balances: balancesWithWallet,
         totalBalance: total.toFixed(6),
         isLoading: false,
       }))
@@ -74,7 +127,7 @@ export function useGateway() {
         isLoading: false,
       }))
     }
-  }, [address])
+  }, [address, publicClient])
 
   /**
    * Deposit USDC to Gateway Wallet on a specific chain

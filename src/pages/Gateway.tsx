@@ -125,11 +125,6 @@ const Gateway = () => {
     })
   }
 
-  const getBalanceForChain = (chainConfig: GatewayChainConfig) => {
-    const balance = balances.find(b => b.domain === chainConfig.domain)
-    return balance ? parseFloat(balance.balance).toFixed(6) : '0.000000'
-  }
-
   return (
     <div className="min-h-screen bg-background">
       <Header>
@@ -290,85 +285,120 @@ const Gateway = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {SUPPORTED_CHAINS.map((chainConfig) => (
-                    <div
-                      key={chainConfig.name}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{chainConfig.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Domain: {chainConfig.domain}
-                        </p>
-                      </div>
+                  {SUPPORTED_CHAINS.map((chainConfig) => {
+                    const chainBalance = balances.find(b => b.domain === chainConfig.domain)
+                    const walletBalance = chainBalance?.walletBalance || '0'
+                    const gatewayBalance = chainBalance?.balance || '0'
 
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="font-semibold">
-                            {isLoading ? (
-                              <span className="text-muted-foreground">Loading...</span>
-                            ) : (
-                              <span>{getBalanceForChain(chainConfig)} USDC</span>
+                    return (
+                      <div
+                        key={chainConfig.name}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{chainConfig.name}</h3>
+                            {!chainConfig.supportsGateway && (
+                              <span className="text-xs bg-muted px-2 py-1 rounded">
+                                Gateway N/A
+                              </span>
                             )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Domain: {chainConfig.domain}
                           </p>
                         </div>
 
-                        <Dialog
-                          open={depositDialogOpen && selectedDepositChain?.name === chainConfig.name}
-                          onOpenChange={(open) => {
-                            setDepositDialogOpen(open)
-                            if (open) {
-                              setSelectedDepositChain(chainConfig)
-                            } else {
-                              setSelectedDepositChain(null)
-                              setDepositAmount('')
-                            }
-                          }}
-                        >
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Wallet className="h-4 w-4 mr-2" />
-                              Deposit
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Deposit to {chainConfig.name}</DialogTitle>
-                              <DialogDescription>
-                                Deposit USDC to your unified Gateway balance
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                              <div>
-                                <Label htmlFor="deposit-amount">Amount (USDC)</Label>
-                                <Input
-                                  id="deposit-amount"
-                                  type="number"
-                                  step="0.000001"
-                                  min="0"
-                                  placeholder="0.00"
-                                  value={depositAmount}
-                                  onChange={(e) => setDepositAmount(e.target.value)}
-                                />
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            {isLoading ? (
+                              <p className="text-sm text-muted-foreground">Loading...</p>
+                            ) : (
+                              <>
+                                <div className="mb-1">
+                                  <p className="text-xs text-muted-foreground">Wallet</p>
+                                  <p className="font-semibold">{parseFloat(walletBalance).toFixed(6)} USDC</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Gateway</p>
+                                  <p className="font-semibold text-primary">{parseFloat(gatewayBalance).toFixed(6)} USDC</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {chainConfig.supportsGateway && (
+                            <Dialog
+                              open={depositDialogOpen && selectedDepositChain?.name === chainConfig.name}
+                              onOpenChange={(open) => {
+                                setDepositDialogOpen(open)
+                                if (open) {
+                                  setSelectedDepositChain(chainConfig)
+                                } else {
+                                  setSelectedDepositChain(null)
+                                  setDepositAmount('')
+                                }
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Wallet className="h-4 w-4 mr-2" />
+                                  Deposit
+                                </Button>
+                              </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Deposit to {chainConfig.name}</DialogTitle>
+                                <DialogDescription>
+                                  Deposit USDC to your unified Gateway balance
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div className="p-3 bg-muted rounded-lg">
+                                  <p className="text-xs text-muted-foreground mb-1">Available in Wallet</p>
+                                  <p className="text-lg font-semibold">{parseFloat(walletBalance).toFixed(6)} USDC</p>
+                                </div>
+
+                                <div>
+                                  <Label htmlFor="deposit-amount">Amount (USDC)</Label>
+                                  <Input
+                                    id="deposit-amount"
+                                    type="number"
+                                    step="0.000001"
+                                    min="0"
+                                    max={walletBalance}
+                                    placeholder="0.00"
+                                    value={depositAmount}
+                                    onChange={(e) => setDepositAmount(e.target.value)}
+                                  />
+                                  {parseFloat(depositAmount) > parseFloat(walletBalance) && (
+                                    <p className="text-xs text-destructive mt-1">Amount exceeds wallet balance</p>
+                                  )}
+                                </div>
+
+                                <Alert>
+                                  <Info className="h-4 w-4" />
+                                  <AlertDescription className="text-sm">
+                                    <strong>Important:</strong> Balance will be available after chain finality
+                                    (Ethereum: ~20 min, Avalanche: instant, Base: ~2 min)
+                                  </AlertDescription>
+                                </Alert>
+
+                                <Button
+                                  onClick={handleDeposit}
+                                  className="w-full"
+                                  disabled={isLoading || parseFloat(depositAmount) > parseFloat(walletBalance)}
+                                >
+                                  {isLoading ? 'Depositing...' : 'Deposit'}
+                                </Button>
                               </div>
-
-                              <Alert>
-                                <Info className="h-4 w-4" />
-                                <AlertDescription className="text-sm">
-                                  <strong>Important:</strong> Balance will be available after chain finality
-                                  (Ethereum: ~20 min, Avalanche: instant, Base: ~2 min)
-                                </AlertDescription>
-                              </Alert>
-
-                              <Button onClick={handleDeposit} className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Depositing...' : 'Deposit'}
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                            </DialogContent>
+                          </Dialog>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 <Alert className="mt-6">
