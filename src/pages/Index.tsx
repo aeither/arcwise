@@ -5,8 +5,9 @@ import { Header } from "@/components/Header";
 import { Settlement, SettlementHistory } from "@/components/SettlementHistory";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { History, Plus, Receipt } from "lucide-react";
+import { History, Plus, Receipt, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Expense {
   id: string;
@@ -158,6 +159,26 @@ const Index = () => {
       </Header>
 
       <div className="container max-w-4xl mx-auto px-4 py-8">
+        {/* Circle Faucet Banner */}
+        <Alert className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <AlertDescription className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex-1">
+              <p className="font-semibold text-blue-900 mb-1">Need test USDC?</p>
+              <p className="text-sm text-blue-700">
+                Get free test USDC from the Circle Faucet to try out gasless settlements and cross-chain transfers
+              </p>
+            </div>
+            <Button
+              onClick={() => window.open('https://faucet.circle.com', '_blank')}
+              variant="default"
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Get Test USDC
+              <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </AlertDescription>
+        </Alert>
 
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <div className="md:col-span-2 space-y-4">
