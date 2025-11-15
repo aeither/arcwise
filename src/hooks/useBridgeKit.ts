@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { createAdapterFromProvider, ViemAdapter} from '@circle-fin/adapter-viem-v2';
+import { createAdapterFromProvider, ViemAdapter } from '@circle-fin/adapter-viem-v2';
 import { BridgeKit, ChainDefinition, } from '@circle-fin/bridge-kit';
-import { type EIP1193Provider, createPublicClient, createWalletClient, http, parseAbi, type Chain } from 'viem';
-import { sepolia, baseSepolia, arbitrumSepolia } from 'viem/chains';
+import { type EIP1193Provider, createPublicClient, createWalletClient, http, parseAbi, type Chain, custom } from 'viem';
+import { sepolia, baseSepolia, arbitrumSepolia, mainnet } from 'viem/chains';
 import { arcTestnet } from 'wagmi/chains';
 import type { SmartAccount } from 'viem/account-abstraction';
 import { toModularTransport } from '@circle-fin/modular-wallets-core';
+import { useCircleSmartAccount } from './useCircleSmartAccount';
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 export const ARC_CHAIN_ID = 5042002;
@@ -399,39 +400,22 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           throw new Error(`Destination chain ${CHAIN_NAMES[destinationChainId]} (${destinationChainId}) not found in Bridge Kit`);
         }
 
+        const client = createWalletClient({
+          chain: mainnet,
+          transport: custom(window.ethereum!)
+        })
+
+        const { account } = useCircleSmartAccount();
 
         // Create custom ViemAdapter for Smart Account
-        adapter = new ViemAdapter(
-          {
-
-            // Public client for reading blockchain data
-            getPublicClient: ({ chain }) => {
-              const viemChain = getViemChain(chain.id);
-              return createPublicClient({
-                chain: viemChain,
-                transport: http(),
-              }) as any;
-            },
-            // Wallet client for signing transactions with Smart Account
-            getWalletClient: ({ chain }) => {
-              const viemChain = getViemChain(chain.id);
-              const chainPath = getChainPath(chain.id);
-
-              // Use Circle's modular transport for gasless transactions
-              const transport = toModularTransport(`${clientUrl}/${chainPath}`, clientKey);
-
-              return createWalletClient({
-                account: options.smartAccount!,
-                chain: viemChain,
-                transport,
-              }) as any;
-            },
+        adapter = await createAdapterFromProvider({
+          provider: {
+            ...account,
+            on: () => { },
+            removeListener: () => { },
+            request: client.request,
           },
-          {
-            addressContext: 'user-controlled',
-            supportedChains: [sourceChain, destinationChain],
-          }
-        );
+        });
 
         console.log('✅ Smart Account adapter created successfully');
 
