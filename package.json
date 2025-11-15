@@ -44,6 +44,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@rainbow-me/rainbowkit": "^2.2.9",
     "@tanstack/react-query": "^5.90.9",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

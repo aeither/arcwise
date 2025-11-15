@@ -1,5 +1,7 @@
 # ArcWise
 
+Split expenses with friends, settle with crypto.
+
 Send cross-chain USDC to friends and split expenses seamlessly across blockchain networks.
 
 ## Features

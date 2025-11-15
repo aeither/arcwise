@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { SmartAccountButton } from "./SmartAccountButton";
+import { ChainSwitcher } from "./ChainSwitcher";
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -14,11 +15,9 @@ export const Header = ({ children }: HeaderProps = {}) => {
             <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               ArcWise
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Split expenses with friends, settle with crypto
-            </p>
           </Link>
           <div className="flex items-center gap-3">
+            <ChainSwitcher />
             <SmartAccountButton />
             {children}
           </div>

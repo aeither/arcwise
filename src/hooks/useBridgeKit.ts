@@ -185,7 +185,7 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           abi: ERC20_ABI,
           functionName: 'balanceOf',
           args: [address as `0x${string}`],
-        });
+        } as any);
 
         const balanceFloat = Number(balance) / Math.pow(10, tokenInfo.decimals);
         setTokenBalance(balanceFloat.toFixed(6));
@@ -298,16 +298,16 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
             {
               // Public client for reading blockchain data
               getPublicClient: async ({ chain }) => {
-                const viemChain = getViemChain(chain.chainId);
+                const viemChain = getViemChain(chain.id);
                 return createPublicClient({
                   chain: viemChain,
                   transport: http(),
-                });
+                }) as any;
               },
               // Wallet client for signing transactions with Smart Account
               getWalletClient: async ({ chain }) => {
-                const viemChain = getViemChain(chain.chainId);
-                const chainPath = getChainPath(chain.chainId);
+                const viemChain = getViemChain(chain.id);
+                const chainPath = getChainPath(chain.id);
                 
                 // Use Circle's modular transport for gasless transactions
                 const transport = toModularTransport(`${clientUrl}/${chainPath}`, clientKey);
@@ -438,8 +438,8 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           throw new Error(`Destination chain ${CHAIN_NAMES[destinationChainId]} (${destinationChainId}) not found in Bridge Kit`);
         }
 
-        console.log(`✅ Using source chain: ${sourceChain.name} (Chain ID: ${sourceChain.chainId})`);
-        console.log(`✅ Using destination chain: ${destinationChain.name} (Chain ID: ${destinationChain.chainId})`);
+        console.log(`✅ Using source chain: ${sourceChain.name} (Chain ID: ${sourceChain.id})`);
+        console.log(`✅ Using destination chain: ${destinationChain.name} (Chain ID: ${destinationChain.id})`);
 
         // Switch to source chain if needed (only for EOA wallets, not Smart Accounts)
         if (!options?.smartAccount && chainId !== sourceChainId && switchChain) {

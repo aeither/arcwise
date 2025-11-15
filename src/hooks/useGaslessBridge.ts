@@ -4,13 +4,13 @@
  */
 
 import { useState, useCallback } from 'react'
-import { createBundlerClient, type Hex } from 'viem/account-abstraction'
+import { createBundlerClient } from 'viem/account-abstraction'
 import { baseSepolia } from 'viem/chains'
 import { toModularTransport } from '@circle-fin/modular-wallets-core'
 import { BridgeKit } from '@circle-fin/bridge-kit'
 import type { BridgeParams } from '@circle-fin/bridge-kit'
 import { useCircleSmartAccount } from './useCircleSmartAccount'
-import { createPublicClient, parseUnits, formatUnits, erc20Abi } from 'viem'
+import { createPublicClient, parseUnits, formatUnits, erc20Abi, Hex } from 'viem'
 
 const clientKey = import.meta.env.VITE_CLIENT_KEY as string
 const clientUrl = import.meta.env.VITE_CLIENT_URL as string
@@ -115,7 +115,7 @@ export function useGaslessBridge() {
           abi: erc20Abi,
           functionName: 'balanceOf',
           args: [account.address],
-        })
+        } as any)
 
         const formattedBalance = formatUnits(balance as bigint, 6)
         setTokenBalance(formattedBalance)

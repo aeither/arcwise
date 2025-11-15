@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { useGaslessBridge, CHAIN_NAMES, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID, ARBITRUM_SEPOLIA_CHAIN_ID } from '../hooks/useGaslessBridge'
 import { isAddress } from 'viem'
+import { useSearchParams } from 'react-router-dom'
 
 // Source chains that can bridge to Arc Testnet
 const SOURCE_CHAINS = [
@@ -29,6 +30,12 @@ const BLOCK_EXPLORERS: Record<number, string> = {
 }
 
 const GaslessBridge = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  
+  // Get chain from URL param or default to Base Sepolia
+  const chainFromUrl = searchParams.get('chain')
+  const initialChainId = chainFromUrl ? parseInt(chainFromUrl) : 84532
+  
   // Circle Smart Account hooks
   const {
     account,
@@ -41,6 +48,17 @@ const GaslessBridge = () => {
     logout,
     checkUSDCBalance,
   } = useCircleSmartAccount()
+  
+  // currentChainId is hardcoded to Base Sepolia (84532) for Circle Smart Accounts
+  // They only work on Base Sepolia with gasless transactions
+  const currentChainId = BASE_SEPOLIA_CHAIN_ID
+  
+  // Set initial chain URL param if not present
+  useEffect(() => {
+    if (!chainFromUrl) {
+      setSearchParams({ chain: currentChainId.toString() }, { replace: true })
+    }
+  }, [chainFromUrl, currentChainId, setSearchParams])
 
   // Gasless Bridge hooks - uses ONLY Circle Smart Account (no MetaMask!)
   const { state: bridgeState, tokenBalance, isLoadingBalance, balanceError, fetchBalance: fetchTokenBalance, bridge: gaslessBridge, reset: resetBridge } = useGaslessBridge()
@@ -53,9 +71,15 @@ const GaslessBridge = () => {
 
   // Bridge form states
   const [bridgeAmount, setBridgeAmount] = useState('')
-  const [sourceChainId, setSourceChainId] = useState(BASE_SEPOLIA_CHAIN_ID)
+  // Use currentChainId from smart account as default source chain
+  const [sourceChainId, setSourceChainId] = useState(currentChainId)
   const [useDifferentRecipient, setUseDifferentRecipient] = useState(false)
   const [recipientAddress, setRecipientAddress] = useState('')
+  
+  // Update sourceChainId when currentChainId changes
+  useEffect(() => {
+    setSourceChainId(currentChainId)
+  }, [currentChainId])
 
   const destinationChainId = ARC_CHAIN_ID
   const sourceChainName = CHAIN_NAMES[sourceChainId]

@@ -209,13 +209,11 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
 
     try {
       const balance = await client.readContract({
-        account: account,
         address: ContractAddress.BaseSepolia_USDC,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [account.address],
-        authorizationList: undefined,
-      })
+      } as any)
 
       return formatUnits(balance as bigint, 6) // USDC has 6 decimals
     } catch (err) {

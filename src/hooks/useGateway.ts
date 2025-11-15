@@ -34,7 +34,7 @@ function getChainPath(chainId: number): string {
     case 421614: // Arbitrum Sepolia
       return 'arbitrumSepolia'
     case 5042002: // Arc Testnet
-      return 'arc'
+      return 'arcTestnet'
     default:
       throw new Error(`Unsupported chain ID: ${chainId}`)
   }
@@ -52,7 +52,7 @@ export interface GatewayState {
   txHash: Hash | null
 }
 
-export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAccount) {
+export function useGateway(userAddress?: `0x${string}`, smartAccountData?: { credential: any, username?: string, address?: string }) {
   const { address: wagmiAddress, chain: currentChain } = useAccount()
   const address = userAddress || wagmiAddress
   const publicClient = usePublicClient()
@@ -115,7 +115,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
               abi: erc20Abi,
               functionName: 'balanceOf',
               args: [address],
-            })
+            } as any)
 
             walletBalance = formatUnits(balance as bigint, USDC_DECIMALS)
           } catch (err) {
@@ -161,7 +161,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
       }
 
       // Use smart account if available, otherwise fall back to wagmi
-      if (!smartAccount && !walletClient) {
+      if (!smartAccountData && !walletClient) {
         throw new Error('No wallet available')
       }
 
@@ -170,10 +170,30 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
       try {
         const amountBigInt = parseUnits(amount, USDC_DECIMALS)
 
-        if (smartAccount) {
+        if (smartAccountData) {
           // Use Circle Smart Account with gasless transactions
+          // IMPORTANT: Recreate smart account for the target chain
           const chainPath = getChainPath(chainConfig.chain.id)
           const transport = toModularTransport(`${clientUrl}/${chainPath}`, clientKey)
+
+          // Create public client for this chain
+          const chainClient = createPublicClient({
+            chain: chainConfig.chain,
+            transport,
+          })
+
+          // Import required functions
+          const { toCircleSmartAccount } = await import('@circle-fin/modular-wallets-core')
+          const { toWebAuthnAccount } = await import('viem/account-abstraction')
+
+          // Recreate smart account for target chain (critical for correct signatures)
+          const smartAccount = await toCircleSmartAccount({
+            client: chainClient,
+            owner: toWebAuthnAccount({ credential: smartAccountData.credential }) as any,
+            name: smartAccountData.username,
+          } as any)
+
+          console.log(`✅ Smart Account for ${chainConfig.name}:`, smartAccount.address)
 
           const bundlerClient = createBundlerClient({
             account: smartAccount,
@@ -234,6 +254,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
             functionName: 'approve',
             args: [chainConfig.gatewayWalletAddress, amountBigInt],
             chain: chainConfig.chain,
+            account: address as any
           })
 
           if (publicClient) {
@@ -246,6 +267,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
             functionName: 'deposit',
             args: [chainConfig.usdcAddress, amountBigInt],
             chain: chainConfig.chain,
+            account: address as any
           })
 
           if (publicClient) {
@@ -272,7 +294,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
         throw err
       }
     },
-    [address, smartAccount, walletClient, publicClient, fetchBalances]
+    [address, smartAccountData, walletClient, publicClient, fetchBalances]
   )
 
   /**
@@ -381,6 +403,7 @@ export function useGateway(userAddress?: `0x${string}`, smartAccount?: SmartAcco
           functionName: 'gatewayMint',
           args: [response.attestation as `0x${string}`, response.signature as `0x${string}`],
           chain: destinationChainConfig.chain,
+          account: address as any
         })
 
         // Wait for mint confirmation

@@ -9,7 +9,22 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Copy, LogOut, Send, Wallet, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 
+// Only chains that Circle's Modular Wallets SDK actually supports
+const SUPPORTED_CHAINS = [
+  { id: 84532, name: 'Base Sepolia', path: 'baseSepolia' },
+  { id: 421614, name: 'Arbitrum Sepolia', path: 'arbitrumSepolia' },
+  { id: 5042002, name: 'Arc Testnet', path: 'arcTestnet' },
+  // Note: These are supported by Circle but not yet added to viem chains config
+  // { id: 11155420, name: 'Optimism Sepolia', path: 'optimismSepolia' },
+  // { id: 80002, name: 'Polygon Amoy', path: 'polygonAmoy' },
+  // { id: 43113, name: 'Avalanche Fuji', path: 'avalancheFuji' },
+]
+
 const CircleAccount = () => {
+  // Circle Smart Accounts currently only work on Base Sepolia (84532)
+  // Multi-chain support is planned for future releases
+  const currentChainId = 84532
+  
   const {
     account,
     credential,
@@ -153,6 +168,46 @@ const CircleAccount = () => {
     })
   }
 
+  const currentChainName = SUPPORTED_CHAINS.find(c => c.id === currentChainId)?.name || 'Unknown'
+
+  const getBlockExplorerUrl = (txHash: string) => {
+    switch (currentChainId) {
+      case 84532:
+        return `https://sepolia.basescan.org/tx/${txHash}`
+      case 421614:
+        return `https://sepolia.arbiscan.io/tx/${txHash}`
+      case 5042002:
+        return `https://testnet.arcscan.app/tx/${txHash}`
+      case 11155420:
+        return `https://sepolia-optimism.etherscan.io/tx/${txHash}`
+      case 80002:
+        return `https://amoy.polygonscan.com/tx/${txHash}`
+      case 43113:
+        return `https://testnet.snowtrace.io/tx/${txHash}`
+      default:
+        return `https://sepolia.basescan.org/tx/${txHash}`
+    }
+  }
+
+  const getBlockExplorerName = () => {
+    switch (currentChainId) {
+      case 84532:
+        return 'BaseScan'
+      case 421614:
+        return 'Arbiscan'
+      case 5042002:
+        return 'BlockScout'
+      case 11155420:
+        return 'Etherscan'
+      case 80002:
+        return 'PolygonScan'
+      case 43113:
+        return 'Snowtrace'
+      default:
+        return 'BaseScan'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -283,7 +338,7 @@ const CircleAccount = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Your Smart Account</CardTitle>
-                    <CardDescription>Base Sepolia Testnet</CardDescription>
+                    <CardDescription>{currentChainName}</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
@@ -340,7 +395,7 @@ const CircleAccount = () => {
                       >
                         Circle Faucet
                       </a></li>
-                      <li>Select "Base Sepolia" network</li>
+                      <li>Select "{currentChainName}" network</li>
                       <li>Paste your account address and request USDC</li>
                       <li>Wait ~1 minute for the USDC to arrive</li>
                     </ol>
@@ -452,12 +507,12 @@ const CircleAccount = () => {
                         </Button>
                       </div>
                       <a
-                        href={`https://sepolia.basescan.org/tx/${txHash}`}
+                        href={getBlockExplorerUrl(txHash)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary underline mt-2 inline-block"
                       >
-                        View on BaseScan →
+                        View on {getBlockExplorerName()} →
                       </a>
                     </div>
                   )}

@@ -67,7 +67,7 @@ export function useSmartAccountContractRead<TAbi extends Abi, TData = unknown>(
         abi,
         functionName,
         args,
-      })
+      } as any)
 
       setData(result as TData)
     } catch (err) {
@@ -140,7 +140,7 @@ export function useSmartAccountBalance(config: {
           ],
           functionName: 'balanceOf',
           args: [address],
-        }) as bigint
+        } as any) as bigint
       } else {
         // Native token balance (ETH)
         result = await publicClient.getBalance({ address })
@@ -202,5 +202,5 @@ export async function callContract<TAbi extends Abi>(config: {
     abi: config.abi,
     functionName: config.functionName,
     args: config.args || [],
-  })
+  } as any)
 }

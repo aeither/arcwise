@@ -5,11 +5,11 @@
  */
 
 import { useState } from 'react'
-import { createBundlerClient, type Hex } from 'viem/account-abstraction'
+import { createBundlerClient } from 'viem/account-abstraction'
 import { baseSepolia } from 'viem/chains'
 import { toModularTransport, encodeTransfer } from '@circle-fin/modular-wallets-core'
 import { useCircleSmartAccount } from './useCircleSmartAccount'
-import { type Address, type Abi, encodeFunctionData, parseUnits } from 'viem'
+import { type Address, type Abi, encodeFunctionData, parseUnits, Hex } from 'viem'
 
 const clientKey = import.meta.env.VITE_CLIENT_KEY as string
 const clientUrl = import.meta.env.VITE_CLIENT_URL as string
@@ -284,7 +284,7 @@ export async function estimateUserOperationGas(config: {
 
   return bundlerClient.estimateUserOperationGas({
     calls: config.calls,
-    paymaster: true,
+    account: config.account,
   })
 }
 

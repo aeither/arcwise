@@ -27,7 +27,7 @@ import {
 import { ArrowUpDown, Wallet, RefreshCw, ArrowRightLeft, Info, Copy, CheckCircle } from 'lucide-react'
 
 const Gateway = () => {
-  const { account } = useCircleSmartAccount()
+  const { account, credential, username } = useCircleSmartAccount()
   const address = account?.address
   const isConnected = !!account
   const {
@@ -40,7 +40,7 @@ const Gateway = () => {
     transfer,
     fetchBalances,
     clearTransaction,
-  } = useGateway(address, account)
+  } = useGateway(address, credential ? { credential, username, address } : undefined)
 
   const { toast } = useToast()
 
