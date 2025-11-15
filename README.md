@@ -1,14 +1,11 @@
 # ArcWise
 
-Split expenses and move USDC seamlessly across blockchain networks.
+Send cross-chain USDC to friends and split expenses seamlessly across blockchain networks.
 
 ## Features
 
-### Expense Splitting
-Track shared expenses and calculate who owes what. Settle debts with on-chain USDC transfers across multiple networks.
-
-### Cross-Chain USDC Bridge
-Transfer USDC between supported testnet chains to Arc Testnet using Circle's Bridge Kit:
+### Send Cross-Chain USDC to Friends
+Transfer USDC between supported testnet chains to Arc Testnet using Circle's Bridge Kit. Perfect for sending money to friends across different networks:
 - Ethereum Sepolia → Arc Testnet
 - Base Sepolia → Arc Testnet
 - Arbitrum Sepolia → Arc Testnet
@@ -19,8 +16,11 @@ Features include:
 - Send to different wallet addresses
 - Real-time balance tracking
 
+### Expense Splitting
+Track shared expenses and calculate who owes what. Settle debts with on-chain USDC transfers across multiple networks.
+
 ### Circle Smart Account
-Create a smart account using your device's biometric authentication (Face ID, Touch ID, Windows Hello):
+Create a smart account using your device's biometric authentication touch ID
 - No seed phrases or private keys
 - Gasless USDC transfers on Base Sepolia
 - Secured by passkey technology
