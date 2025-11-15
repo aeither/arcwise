@@ -4,12 +4,12 @@
  * Uses ERC-4337 Account Abstraction with gasless transactions
  */
 
+import { encodeTransfer, toModularTransport } from '@circle-fin/modular-wallets-core'
 import { useState } from 'react'
+import { type Abi, type Address, encodeFunctionData, Hex, parseUnits } from 'viem'
 import { createBundlerClient } from 'viem/account-abstraction'
 import { baseSepolia } from 'viem/chains'
-import { toModularTransport, encodeTransfer } from '@circle-fin/modular-wallets-core'
 import { useCircleSmartAccount } from './useCircleSmartAccount'
-import { type Address, type Abi, encodeFunctionData, parseUnits, Hex } from 'viem'
 
 const clientKey = import.meta.env.VITE_CLIENT_KEY as string
 const clientUrl = import.meta.env.VITE_CLIENT_URL as string

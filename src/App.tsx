@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import Bridge from "./pages/Bridge";
 import CircleAccount from "./pages/CircleAccount";
 import Gateway from "./pages/Gateway";
-import GaslessBridge from "./pages/GaslessBridge";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,7 +24,6 @@ const App = () => (
             <Route path="/bridge" element={<Bridge />} />
             <Route path="/circle-account" element={<CircleAccount />} />
             <Route path="/gateway" element={<Gateway />} />
-            <Route path="/gasless-bridge" element={<GaslessBridge />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/button'
@@ -8,12 +8,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Copy, LogOut, Send, Wallet, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { arbitrumSepolia, arcTestnet, baseSepolia } from 'wagmi/chains'
 
 // Only chains that Circle's Modular Wallets SDK actually supports
+// Using Wagmi chain configs for explorer info
 const SUPPORTED_CHAINS = [
-  { id: 84532, name: 'Base Sepolia', path: 'baseSepolia' },
-  { id: 421614, name: 'Arbitrum Sepolia', path: 'arbitrumSepolia' },
-  { id: 5042002, name: 'Arc Testnet', path: 'arcTestnet' },
+  { id: 84532, name: 'Base Sepolia', path: 'baseSepolia', chain: baseSepolia },
+  { id: 421614, name: 'Arbitrum Sepolia', path: 'arbitrumSepolia', chain: arbitrumSepolia },
+  { id: 5042002, name: 'Arc Testnet', path: 'arcTestnet', chain: arcTestnet },
   // Note: These are supported by Circle but not yet added to viem chains config
   // { id: 11155420, name: 'Optimism Sepolia', path: 'optimismSepolia' },
   // { id: 80002, name: 'Polygon Amoy', path: 'polygonAmoy' },
@@ -170,42 +172,23 @@ const CircleAccount = () => {
 
   const currentChainName = SUPPORTED_CHAINS.find(c => c.id === currentChainId)?.name || 'Unknown'
 
+  // Get chain config from Wagmi chains
+  const currentChain = useMemo(() => {
+    return SUPPORTED_CHAINS.find(c => c.id === currentChainId)?.chain
+  }, [currentChainId])
+
   const getBlockExplorerUrl = (txHash: string) => {
-    switch (currentChainId) {
-      case 84532:
-        return `https://sepolia.basescan.org/tx/${txHash}`
-      case 421614:
-        return `https://sepolia.arbiscan.io/tx/${txHash}`
-      case 5042002:
-        return `https://testnet.arcscan.app/tx/${txHash}`
-      case 11155420:
-        return `https://sepolia-optimism.etherscan.io/tx/${txHash}`
-      case 80002:
-        return `https://amoy.polygonscan.com/tx/${txHash}`
-      case 43113:
-        return `https://testnet.snowtrace.io/tx/${txHash}`
-      default:
-        return `https://sepolia.basescan.org/tx/${txHash}`
+    const explorerUrl = currentChain?.blockExplorers?.default?.url
+    if (!explorerUrl) {
+      // Fallback to Base Sepolia if chain not found
+      return `https://sepolia.basescan.org/tx/${txHash}`
     }
+    // Remove trailing slash if present, then append tx path
+    return `${explorerUrl.replace(/\/$/, '')}/tx/${txHash}`
   }
 
   const getBlockExplorerName = () => {
-    switch (currentChainId) {
-      case 84532:
-        return 'BaseScan'
-      case 421614:
-        return 'Arbiscan'
-      case 5042002:
-        return 'BlockScout'
-      case 11155420:
-        return 'Etherscan'
-      case 80002:
-        return 'PolygonScan'
-      case 43113:
-        return 'Snowtrace'
-      default:
-        return 'BaseScan'
-    }
+    return currentChain?.blockExplorers?.default?.name ?? 'Block Explorer'
   }
 
   return (

@@ -10,7 +10,7 @@ import { AlertCircle, ArrowLeftRight, CheckCircle, ExternalLink, Loader2, Refres
 import { useEffect, useState } from 'react';
 import { useSwitchChain } from 'wagmi';
 import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount';
-import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID, ARBITRUM_SEPOLIA_CHAIN_ID } from '../hooks/useBridgeKit';
+import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID, ARBITRUM_SEPOLIA_CHAIN_ID, SUPPORTED_VIEM_CHAINS } from '../hooks/useBridgeKit';
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import type { BridgeParams } from '@circle-fin/bridge-kit';
 import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
@@ -120,6 +120,10 @@ export default function Bridge() {
       const kit = new BridgeKit();
       const adapter = await createAdapterFromProvider({
         provider: window.ethereum as EIP1193Provider,
+        capabilities: {
+          addressContext: 'user-controlled',
+          supportedChains: SUPPORTED_VIEM_CHAINS,
+        },
       });
 
       const supportedChains = kit.getSupportedChains();
