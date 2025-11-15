@@ -54,7 +54,7 @@ export interface CircleSmartAccountActions {
   register: (username: string) => Promise<void>
   login: () => Promise<void>
   logout: () => void
-  sendUSDC: (to: `0x${string}`, amount: string) => Promise<void>
+  sendUSDC: (to: `0x${string}`, amount: string) => Promise<`0x${string}`>
   checkUSDCBalance: () => Promise<string>
   clearTransaction: () => void
 }
@@ -81,7 +81,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
       client,
       owner: toWebAuthnAccount({ credential }) as WebAuthnAccount,
       name: username,
-    }).then(setAccount)
+    } as any).then(setAccount)
       .catch(err => {
         console.error('Error creating smart account:', err)
         setError(err instanceof Error ? err.message : 'Failed to create smart account')
@@ -175,7 +175,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
         account,
         calls: [callData],
         paymaster: true,
-      })
+      } as any)
 
       setUserOpHash(hash)
 
@@ -209,10 +209,12 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
 
     try {
       const balance = await client.readContract({
+        account: account,
         address: ContractAddress.BaseSepolia_USDC,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [account.address],
+        authorizationList: undefined,
       })
 
       return formatUnits(balance as bigint, 6) // USDC has 6 decimals

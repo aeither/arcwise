@@ -147,16 +147,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          size="lg"
-          className="shadow-medium hover:shadow-soft transition-all hover:scale-105"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Expense
-        </Button>
-      </Header>
+      <Header />
 
       <div className="container max-w-4xl mx-auto px-4 py-8">
         {/* Circle Faucet Banner */}

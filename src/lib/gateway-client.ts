@@ -103,6 +103,8 @@ export class GatewayClient {
     const url = this.baseUrl + path
     const headers = { 'Content-Type': 'application/json' }
 
+    console.log(`Gateway API Request to ${url}:`, JSON.stringify(body, null, 2))
+
     const response = await fetch(url, {
       method: 'POST',
       headers,
@@ -112,9 +114,20 @@ export class GatewayClient {
     })
 
     if (!response.ok) {
-      throw new Error(`Gateway API error: ${response.statusText}`)
+      let errorMessage = `Gateway API error: ${response.statusText}`
+      try {
+        const errorData = await response.json()
+        console.error('Gateway API error response:', errorData)
+        errorMessage = `Gateway API error: ${errorData.message || errorData.error || response.statusText}`
+      } catch (e) {
+        // If we can't parse the error response, use the status text
+        console.error('Failed to parse error response:', e)
+      }
+      throw new Error(errorMessage)
     }
 
-    return response.json()
+    const data = await response.json()
+    console.log('Gateway API Response:', data)
+    return data
   }
 }

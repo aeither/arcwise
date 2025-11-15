@@ -155,13 +155,7 @@ const CircleAccount = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header>
-        <div className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          <span className="font-semibold">Circle Smart Account</span>
-        </div>
-      </Header>
-
+      <Header />
       <div className="container max-w-4xl mx-auto px-4 py-8">
         {/* Error Alert */}
         {error && (

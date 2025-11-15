@@ -1,8 +1,11 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
+import { createAdapterFromProvider, ViemAdapter } from '@circle-fin/adapter-viem-v2';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import { type EIP1193Provider, createPublicClient, http, parseAbi } from 'viem';
+import { type EIP1193Provider, createPublicClient, createWalletClient, http, parseAbi } from 'viem';
+import { sepolia, baseSepolia, arbitrumSepolia, arcTestnet } from 'viem/chains';
+import type { SmartAccount } from 'viem/account-abstraction';
+import { toModularTransport } from '@circle-fin/modular-wallets-core';
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 export const ARC_CHAIN_ID = 5042002;
@@ -111,9 +114,18 @@ const publicClients: Record<number, any> = {
 
 let bridgeKitInstance: BridgeKit | null = null;
 
-export function useBridgeKit() {
-  const { address, isConnected, chainId } = useAccount();
+interface UseBridgeKitOptions {
+  accountAddress?: string; // Optional smart account address to use instead of wagmi wallet
+  smartAccount?: SmartAccount | null; // Optional smart account instance for signing transactions
+}
+
+export function useBridgeKit(options?: UseBridgeKitOptions) {
+  const { address: wagmiAddress, isConnected: wagmiConnected, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
+
+  // Use smart account address if provided, otherwise fall back to wagmi wallet
+  const address = options?.accountAddress || wagmiAddress;
+  const isConnected = options?.accountAddress ? !!options.accountAddress : wagmiConnected;
 
   const [state, setState] = useState<BridgeState>({
     step: 'idle',
@@ -233,19 +245,105 @@ export function useBridgeKit() {
           destinationChainId,
         }));
 
-        if (!window.ethereum) {
-          throw new Error('MetaMask not found. Please install MetaMask.');
-        }
-
         if (!bridgeKitInstance) {
           bridgeKitInstance = new BridgeKit();
         }
 
-        // Create adapter from wallet provider
-        setState(prev => ({ ...prev, step: 'switching-network' }));
-        const adapter = await createAdapterFromProvider({
-          provider: window.ethereum as EIP1193Provider,
-        });
+        // --- CREATE ADAPTER: Smart Account or MetaMask ---
+        let adapter;
+
+        if (options?.smartAccount) {
+          // Use Circle Smart Account with gasless transactions
+          console.log('✅ Creating adapter from Circle Smart Account...');
+          console.log('📍 Smart Account address:', options.smartAccount.address);
+
+          // Get Circle client credentials from environment
+          const clientKey = import.meta.env.VITE_CLIENT_KEY as string;
+          const clientUrl = import.meta.env.VITE_CLIENT_URL as string;
+
+          // Helper to get chain path for Circle's transport
+          const getChainPath = (chainId: number): string => {
+            switch (chainId) {
+              case SEPOLIA_CHAIN_ID:
+                return 'sepolia';
+              case BASE_SEPOLIA_CHAIN_ID:
+                return 'baseSepolia';
+              case ARBITRUM_SEPOLIA_CHAIN_ID:
+                return 'arbitrumSepolia';
+              case ARC_CHAIN_ID:
+                return 'arc';
+              default:
+                throw new Error(`Unsupported chain ID for Circle Smart Account: ${chainId}`);
+            }
+          };
+
+          // Helper to get viem chain object
+          const getViemChain = (chainId: number) => {
+            switch (chainId) {
+              case SEPOLIA_CHAIN_ID:
+                return sepolia;
+              case BASE_SEPOLIA_CHAIN_ID:
+                return baseSepolia;
+              case ARBITRUM_SEPOLIA_CHAIN_ID:
+                return arbitrumSepolia;
+              case ARC_CHAIN_ID:
+                return arcTestnet;
+              default:
+                throw new Error(`Unsupported chain ID: ${chainId}`);
+            }
+          };
+
+          // Create custom ViemAdapter for Smart Account
+          adapter = new ViemAdapter(
+            {
+              // Public client for reading blockchain data
+              getPublicClient: async ({ chain }) => {
+                const viemChain = getViemChain(chain.chainId);
+                return createPublicClient({
+                  chain: viemChain,
+                  transport: http(),
+                });
+              },
+              // Wallet client for signing transactions with Smart Account
+              getWalletClient: async ({ chain }) => {
+                const viemChain = getViemChain(chain.chainId);
+                const chainPath = getChainPath(chain.chainId);
+                
+                // Use Circle's modular transport for gasless transactions
+                const transport = toModularTransport(`${clientUrl}/${chainPath}`, clientKey);
+                
+                return createWalletClient({
+                  account: options.smartAccount!,
+                  chain: viemChain,
+                  transport,
+                });
+              },
+            },
+            {
+              addressContext: 'user-controlled',
+              supportedChains: [
+                { ...sepolia, type: 'evm' as const },
+                { ...baseSepolia, type: 'evm' as const },
+                { ...arbitrumSepolia, type: 'evm' as const },
+                { ...arcTestnet, type: 'evm' as const },
+              ],
+            }
+          );
+
+          console.log('✅ Smart Account adapter created successfully');
+        } else {
+          // Fallback to MetaMask/EOA wallet
+          console.log('🦊 Creating adapter from browser provider (MetaMask)...');
+          
+          if (!window.ethereum) {
+            throw new Error('MetaMask not found. Please install MetaMask or use Circle Smart Account.');
+          }
+
+          setState(prev => ({ ...prev, step: 'switching-network' }));
+          adapter = await createAdapterFromProvider({
+            provider: window.ethereum as EIP1193Provider,
+          });
+        }
 
         console.log(`🌉 Bridging ${amount} ${token} from ${CHAIN_NAMES[sourceChainId]} to ${CHAIN_NAMES[destinationChainId]}`);
 
@@ -343,8 +441,9 @@ export function useBridgeKit() {
         console.log(`✅ Using source chain: ${sourceChain.name} (Chain ID: ${sourceChain.chainId})`);
         console.log(`✅ Using destination chain: ${destinationChain.name} (Chain ID: ${destinationChain.chainId})`);
 
-        // Switch to source chain if needed
-        if (chainId !== sourceChainId && switchChain) {
+        // Switch to source chain if needed (only for EOA wallets, not Smart Accounts)
+        if (!options?.smartAccount && chainId !== sourceChainId && switchChain) {
+          console.log('🦊 Switching chain for EOA wallet...');
           try {
             await switchChain({ chainId: sourceChainId });
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -353,6 +452,8 @@ export function useBridgeKit() {
               console.warn('⚠️ Chain switch warning:', err.message);
             }
           }
+        } else if (options?.smartAccount) {
+          console.log('✅ Skipping chain switch for Smart Account (adapter handles chain context)');
         }
 
         // Execute bridge
@@ -474,7 +575,7 @@ export function useBridgeKit() {
         });
       }
     },
-    [address, isConnected, chainId, switchChain, fetchTokenBalance]
+    [address, isConnected, chainId, switchChain, fetchTokenBalance, options?.smartAccount]
   );
 
   return {

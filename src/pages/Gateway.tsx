@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useGateway } from '@/hooks/useGateway'
+import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount'
 import { SUPPORTED_CHAINS, type GatewayChainConfig } from '@/lib/gateway-constants'
 import { Header } from '@/components/Header'
 import { Button } from '@/components/ui/button'
@@ -24,10 +25,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { ArrowUpDown, Wallet, RefreshCw, ArrowRightLeft, Info, Copy, CheckCircle } from 'lucide-react'
-import { useAccount } from 'wagmi'
 
 const Gateway = () => {
-  const { address, isConnected } = useAccount()
+  const { account } = useCircleSmartAccount()
+  const address = account?.address
+  const isConnected = !!account
   const {
     balances,
     totalBalance,
@@ -38,7 +40,7 @@ const Gateway = () => {
     transfer,
     fetchBalances,
     clearTransaction,
-  } = useGateway()
+  } = useGateway(address, account)
 
   const { toast } = useToast()
 
@@ -127,12 +129,7 @@ const Gateway = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header>
-        <div className="flex items-center gap-2">
-          <ArrowUpDown className="h-5 w-5" />
-          <span className="font-semibold">Circle Gateway</span>
-        </div>
-      </Header>
+      <Header />
 
       <div className="container max-w-6xl mx-auto px-4 py-8">
         {/* Error Alert */}
@@ -146,18 +143,21 @@ const Gateway = () => {
         {!isConnected && (
           <Card>
             <CardHeader>
-              <CardTitle>Connect Your Wallet</CardTitle>
+              <CardTitle>Connect Your Smart Account</CardTitle>
               <CardDescription>
-                Please connect your wallet to use Circle Gateway
+                Please login to your Circle Smart Account to use Gateway
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
                   Circle Gateway enables cross-chain USDC transfers with a unified balance across multiple chains.
                 </AlertDescription>
               </Alert>
+              <Button onClick={() => window.location.href = '/circle-account'} className="w-full">
+                Go to Circle Account
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -346,54 +346,54 @@ const Gateway = () => {
                                   Deposit
                                 </Button>
                               </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Deposit to {chainConfig.name}</DialogTitle>
-                                <DialogDescription>
-                                  Deposit USDC to your unified Gateway balance
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div className="p-3 bg-muted rounded-lg">
-                                  <p className="text-xs text-muted-foreground mb-1">Available in Wallet</p>
-                                  <p className="text-lg font-semibold">{parseFloat(walletBalance).toFixed(6)} USDC</p>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Deposit to {chainConfig.name}</DialogTitle>
+                                  <DialogDescription>
+                                    Deposit USDC to your unified Gateway balance
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div className="p-3 bg-muted rounded-lg">
+                                    <p className="text-xs text-muted-foreground mb-1">Available in Wallet</p>
+                                    <p className="text-lg font-semibold">{parseFloat(walletBalance).toFixed(6)} USDC</p>
+                                  </div>
+
+                                  <div>
+                                    <Label htmlFor="deposit-amount">Amount (USDC)</Label>
+                                    <Input
+                                      id="deposit-amount"
+                                      type="number"
+                                      step="0.000001"
+                                      min="0"
+                                      max={walletBalance}
+                                      placeholder="0.00"
+                                      value={depositAmount}
+                                      onChange={(e) => setDepositAmount(e.target.value)}
+                                    />
+                                    {parseFloat(depositAmount) > parseFloat(walletBalance) && (
+                                      <p className="text-xs text-destructive mt-1">Amount exceeds wallet balance</p>
+                                    )}
+                                  </div>
+
+                                  <Alert>
+                                    <Info className="h-4 w-4" />
+                                    <AlertDescription className="text-sm">
+                                      <strong>Important:</strong> Balance will be available after chain finality
+                                      (Ethereum: ~20 min, Avalanche: instant, Base: ~2 min)
+                                    </AlertDescription>
+                                  </Alert>
+
+                                  <Button
+                                    onClick={handleDeposit}
+                                    className="w-full"
+                                    disabled={isLoading || parseFloat(depositAmount) > parseFloat(walletBalance)}
+                                  >
+                                    {isLoading ? 'Depositing...' : 'Deposit'}
+                                  </Button>
                                 </div>
-
-                                <div>
-                                  <Label htmlFor="deposit-amount">Amount (USDC)</Label>
-                                  <Input
-                                    id="deposit-amount"
-                                    type="number"
-                                    step="0.000001"
-                                    min="0"
-                                    max={walletBalance}
-                                    placeholder="0.00"
-                                    value={depositAmount}
-                                    onChange={(e) => setDepositAmount(e.target.value)}
-                                  />
-                                  {parseFloat(depositAmount) > parseFloat(walletBalance) && (
-                                    <p className="text-xs text-destructive mt-1">Amount exceeds wallet balance</p>
-                                  )}
-                                </div>
-
-                                <Alert>
-                                  <Info className="h-4 w-4" />
-                                  <AlertDescription className="text-sm">
-                                    <strong>Important:</strong> Balance will be available after chain finality
-                                    (Ethereum: ~20 min, Avalanche: instant, Base: ~2 min)
-                                  </AlertDescription>
-                                </Alert>
-
-                                <Button
-                                  onClick={handleDeposit}
-                                  className="w-full"
-                                  disabled={isLoading || parseFloat(depositAmount) > parseFloat(walletBalance)}
-                                >
-                                  {isLoading ? 'Depositing...' : 'Deposit'}
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                              </DialogContent>
+                            </Dialog>
                           )}
                         </div>
                       </div>

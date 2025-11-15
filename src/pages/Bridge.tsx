@@ -8,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Header } from '@/components/Header';
 import { AlertCircle, ArrowLeftRight, CheckCircle, ExternalLink, Loader2, RefreshCw, Zap, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useSwitchChain } from 'wagmi';
+import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount';
 import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID, ARBITRUM_SEPOLIA_CHAIN_ID } from '../hooks/useBridgeKit';
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import type { BridgeParams } from '@circle-fin/bridge-kit';
@@ -42,9 +43,15 @@ interface CostEstimate {
 }
 
 export default function Bridge() {
-  const { address, isConnected } = useAccount();
+  const { account } = useCircleSmartAccount();
   const { switchChain } = useSwitchChain();
-  const { state, tokenBalance, isLoadingBalance, balanceError, fetchTokenBalance, bridge, reset } = useBridgeKit();
+  const { state, tokenBalance, isLoadingBalance, balanceError, fetchTokenBalance, bridge, reset } = useBridgeKit({
+    accountAddress: account?.address,
+    smartAccount: account, // Pass the full smart account instance for bridging
+  });
+
+  const address = account?.address;
+  const isConnected = !!account;
 
   const [amount, setAmount] = useState('');
   const [sourceChainId, setSourceChainId] = useState(SEPOLIA_CHAIN_ID);
@@ -259,11 +266,16 @@ export default function Bridge() {
           <Card className="max-w-md mx-auto text-center">
             <CardHeader>
               <ArrowLeftRight size={48} className="mx-auto mb-4 text-muted-foreground" />
-              <CardTitle className="text-xl">Connect Your Wallet</CardTitle>
+              <CardTitle className="text-xl">Connect Your Smart Account</CardTitle>
               <CardDescription>
-                Connect your wallet to bridge USDC to Arc Testnet
+                Please login to your Circle Smart Account to bridge USDC to Arc Testnet
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <Button onClick={() => window.location.href = '/circle-account'} className="w-full">
+                Go to Circle Account
+              </Button>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -638,10 +650,9 @@ export default function Bridge() {
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground space-y-2">
-              <p className="font-semibold">Bridge Process (3 MetaMask Popups):</p>
-              <p>1. <strong>Approve</strong>: Approve USDC spending for the bridge contract</p>
-              <p>2. <strong>Send</strong>: Send USDC to the source chain bridge contract</p>
-              <p>3. <strong>Receive</strong>: Sign to receive USDC on Arc Testnet</p>
+              <p className="font-semibold">Bridge Process:</p>
+              <p><strong>With Circle Smart Account:</strong> Gasless bridging with biometric authentication (Face ID/Touch ID)</p>
+              <p><strong>With MetaMask:</strong> 3 wallet popups for approve, send, and receive steps</p>
 
               <p className="mt-3 pt-3 border-t">
                 <strong>Advanced Features:</strong>
