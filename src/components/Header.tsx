@@ -1,4 +1,5 @@
 import { BridgeButton } from "@/components/BridgeButton";
+import { CircleAccountButton } from "@/components/CircleAccountButton";
 import { WalletButton } from "@/components/WalletButton";
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ export const Header = ({ children }: HeaderProps) => {
           </div>
           <div className="flex items-center gap-3">
             <BridgeButton />
+            <CircleAccountButton />
             <WalletButton />
             {children}
           </div>
