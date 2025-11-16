@@ -36,7 +36,12 @@ const CONTACTS = [
 
 const Gateway = () => {
   const [searchParams] = useSearchParams()
-  const { account, credential, username } = useCircleSmartAccount()
+  
+  // Get chain from URL for highlighting or pre-selection
+  const chainFromUrl = searchParams.get('chain')
+  const selectedChainId = chainFromUrl ? parseInt(chainFromUrl) : 84532 // Default to Base Sepolia
+  
+  const { account, credential, username, sendUSDC, isLoading: smartAccountLoading } = useCircleSmartAccount(selectedChainId)
   const address = account?.address
   const isConnected = !!account
   const {
@@ -52,10 +57,6 @@ const Gateway = () => {
   } = useGateway(address, credential ? { credential, username, address } : undefined)
 
   const { toast } = useToast()
-  
-  // Get chain from URL for highlighting or pre-selection
-  const chainFromUrl = searchParams.get('chain')
-  const selectedChainId = chainFromUrl ? parseInt(chainFromUrl) : null
 
   // Deposit dialog state
   const [depositDialogOpen, setDepositDialogOpen] = useState(false)
@@ -97,10 +98,19 @@ const Gateway = () => {
   }
 
   const handleTransfer = async () => {
-    if (!selectedTransferChain || !transferAmount || !recipientAddress) {
+    if (!credential || !account) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to send money',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!transferAmount || !recipientAddress) {
       toast({
         title: 'Invalid input',
-        description: 'Please fill in all fields',
+        description: 'Please enter recipient and amount',
         variant: 'destructive',
       })
       return
@@ -116,15 +126,25 @@ const Gateway = () => {
     }
 
     try {
-      await transfer(selectedTransferChain, transferAmount, recipientAddress)
       toast({
-        title: 'Transfer successful!',
-        description: `Transferred ${transferAmount} USDC to ${selectedTransferChain.name}`,
+        title: 'Sending payment...',
+        description: 'Processing - no fees!',
       })
+
+      await sendUSDC(recipientAddress as `0x${string}`, transferAmount)
+      
+      toast({
+        title: 'Transfer successful! 🎉',
+        description: `Sent ${transferAmount} USDC`,
+      })
+      
       setTransferDialogOpen(false)
       setTransferAmount('')
       setSelectedContact('')
       setRecipientAddress('')
+      
+      // Refresh balances after transfer
+      setTimeout(() => fetchBalances(), 2000)
     } catch (err) {
       toast({
         title: 'Transfer failed',
@@ -238,31 +258,11 @@ const Gateway = () => {
                       <DialogHeader>
                         <DialogTitle>Send Money</DialogTitle>
                         <DialogDescription>
-                          Send to any network instantly
-                          <span className="text-xs text-muted-foreground ml-1">(Circle Gateway cross-chain)</span>
+                          Send instantly with no fees
+                          <span className="text-xs text-muted-foreground ml-1">(powered by Circle Smart Account)</span>
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="transfer-chain">To Network</Label>
-                          <Select
-                            onValueChange={(value) => {
-                              const chain = SUPPORTED_CHAINS.find(c => c.name === value)
-                              setSelectedTransferChain(chain || null)
-                            }}
-                          >
-                            <SelectTrigger id="transfer-chain">
-                              <SelectValue placeholder="Select network" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SUPPORTED_CHAINS.map((chain) => (
-                                <SelectItem key={chain.name} value={chain.name}>
-                                  {chain.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
 
                         <div>
                           <Label htmlFor="contact">Select Contact</Label>
@@ -322,8 +322,8 @@ const Gateway = () => {
                           </AlertDescription>
                         </Alert>
 
-                        <Button onClick={handleTransfer} className="w-full" disabled={isLoading}>
-                          {isLoading ? 'Transferring...' : 'Transfer'}
+                        <Button onClick={handleTransfer} className="w-full" disabled={smartAccountLoading}>
+                          {smartAccountLoading ? 'Sending...' : 'Send USDC'}
                         </Button>
                       </div>
                     </DialogContent>
