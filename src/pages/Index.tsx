@@ -24,13 +24,13 @@ interface Balance {
   amount: number;
 }
 
-const INITIAL_PEOPLE = ["Jani", "Armando", "Giovanni"];
+const INITIAL_PEOPLE = ["Olivia", "Juan", "Lucas"];
 
 // Demo wallet addresses - in production, users would add these themselves
 const DEMO_WALLET_ADDRESSES: Record<string, string> = {
-  Jani: "0x742D35CC6634c0532925A3b844BC9E7595F0BEb0",
-  Armando: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
-  Giovanni: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
+  Olivia: "0x742D35CC6634c0532925A3b844BC9E7595F0BEb0",
+  Juan: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
+  Lucas: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
 };
 
 const Index = () => {

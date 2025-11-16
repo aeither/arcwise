@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGateway } from '@/hooks/useGateway'
 import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount'
 import { SUPPORTED_CHAINS, type GatewayChainConfig } from '@/lib/gateway-constants'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { useSearchParams } from 'react-router-dom'
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import {
 import { ArrowUpDown, Wallet, RefreshCw, ArrowRightLeft, Info, Copy, CheckCircle } from 'lucide-react'
 
 const Gateway = () => {
+  const [searchParams] = useSearchParams()
   const { account, credential, username } = useCircleSmartAccount()
   const address = account?.address
   const isConnected = !!account
@@ -43,6 +45,10 @@ const Gateway = () => {
   } = useGateway(address, credential ? { credential, username, address } : undefined)
 
   const { toast } = useToast()
+  
+  // Get chain from URL for highlighting or pre-selection
+  const chainFromUrl = searchParams.get('chain')
+  const selectedChainId = chainFromUrl ? parseInt(chainFromUrl) : null
 
   // Deposit dialog state
   const [depositDialogOpen, setDepositDialogOpen] = useState(false)

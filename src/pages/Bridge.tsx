@@ -13,6 +13,7 @@ import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount';
 import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, SOURCE_CHAINS, type CostEstimate } from '../hooks/useBridgeKit';
 import { BridgeKit } from '@circle-fin/bridge-kit';
 import { isAddress } from 'viem';
+import { useSearchParams } from 'react-router-dom';
 
 // Block explorer URLs
 const BLOCK_EXPLORERS: Record<number, string> = {
@@ -23,6 +24,7 @@ const BLOCK_EXPLORERS: Record<number, string> = {
 };
 
 export default function Bridge() {
+  const [searchParams] = useSearchParams();
   const { account } = useCircleSmartAccount();
   const { switchChain } = useSwitchChain();
   const { state, tokenBalance, isLoadingBalance, balanceError, fetchTokenBalance, bridge, reset, estimateCosts } = useBridgeKit({
@@ -33,8 +35,12 @@ export default function Bridge() {
   const address = account?.address;
   const isConnected = !!account;
 
+  // Get chain from URL params for initial source chain selection
+  const chainFromUrl = searchParams.get('chain');
+  const initialSourceChain = chainFromUrl ? parseInt(chainFromUrl) : SEPOLIA_CHAIN_ID;
+  
   const [amount, setAmount] = useState('');
-  const [sourceChainId, setSourceChainId] = useState(SEPOLIA_CHAIN_ID);
+  const [sourceChainId, setSourceChainId] = useState(initialSourceChain);
   const [costEstimates, setCostEstimates] = useState<CostEstimate[]>([]);
   const [isEstimating, setIsEstimating] = useState(false);
   const [showEstimates, setShowEstimates] = useState(false);
@@ -48,6 +54,17 @@ export default function Bridge() {
   const destinationChainName = CHAIN_NAMES[destinationChainId];
 
   const isValidRecipientAddress = !useDifferentRecipient || (recipientAddress && isAddress(recipientAddress));
+
+  // Update source chain when URL param changes
+  useEffect(() => {
+    if (chainFromUrl) {
+      const newChainId = parseInt(chainFromUrl);
+      // Check if it's a valid source chain
+      if (SOURCE_CHAINS.some(chain => chain.id === newChainId)) {
+        setSourceChainId(newChainId);
+      }
+    }
+  }, [chainFromUrl]);
 
   // Fetch balance on mount and when source chain changes
   useEffect(() => {

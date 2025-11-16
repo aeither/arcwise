@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Copy, LogOut, Send, Wallet, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { arbitrumSepolia, arcTestnet, baseSepolia } from 'wagmi/chains'
+import { useSearchParams } from 'react-router-dom'
 
 // Only chains that Circle's Modular Wallets SDK actually supports
 // Using Wagmi chain configs for explorer info
@@ -23,9 +24,11 @@ const SUPPORTED_CHAINS = [
 ]
 
 const CircleAccount = () => {
-  // Circle Smart Accounts currently only work on Base Sepolia (84532)
-  // Multi-chain support is planned for future releases
-  const currentChainId = 84532
+  const [searchParams] = useSearchParams()
+  
+  // Get chain from URL params, fallback to Base Sepolia (84532)
+  const chainFromUrl = searchParams.get('chain')
+  const currentChainId = chainFromUrl ? parseInt(chainFromUrl) : 84532
   
   const {
     account,
