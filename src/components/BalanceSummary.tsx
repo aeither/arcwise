@@ -15,10 +15,11 @@ interface BalanceSummaryProps {
   balances: Balance[];
   onSettle: (from: string, to: string, amount: number, txHash: string, chain: string) => void;
   walletAddresses: Record<string, string>;
+  chainId?: number;
 }
 
-export function BalanceSummary({ balances, onSettle, walletAddresses }: BalanceSummaryProps) {
-  const { account, credential, sendUSDC, isLoading, txHash } = useCircleSmartAccount();
+export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 84532 }: BalanceSummaryProps) {
+  const { account, credential, sendUSDC, isLoading, txHash, currentChainName } = useCircleSmartAccount(chainId);
   const { toast } = useToast();
   const [pendingSettlement, setPendingSettlement] = useState<string | null>(null);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export function BalanceSummary({ balances, onSettle, walletAddresses }: BalanceS
   useEffect(() => {
     if (txHash && txHash !== lastTxHash && pendingSettlement) {
       const [from, to, amount] = pendingSettlement.split('|');
-      onSettle(from, to, parseFloat(amount), txHash, 'Base Sepolia');
+      onSettle(from, to, parseFloat(amount), txHash, currentChainName);
       setPendingSettlement(null);
       setLastTxHash(txHash);
 
@@ -37,7 +38,7 @@ export function BalanceSummary({ balances, onSettle, walletAddresses }: BalanceS
         duration: 4000,
       });
     }
-  }, [txHash, lastTxHash, pendingSettlement, onSettle, toast]);
+  }, [txHash, lastTxHash, pendingSettlement, onSettle, toast, currentChainName]);
 
   const handleSettleUp = async (balance: Balance) => {
     if (!credential || !account) {

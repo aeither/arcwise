@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { History, Plus, Receipt, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useSearchParams } from "react-router-dom";
 
 interface Expense {
   id: string;
@@ -34,11 +35,16 @@ const DEMO_WALLET_ADDRESSES: Record<string, string> = {
 };
 
 const Index = () => {
+  const [searchParams] = useSearchParams();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const [previousBalanceCount, setPreviousBalanceCount] = useState(0);
+  
+  // Get chain from URL params (for future chain-specific features)
+  const chainFromUrl = searchParams.get('chain');
+  const currentChainId = chainFromUrl ? parseInt(chainFromUrl) : 84532; // Default to Base Sepolia
 
   // Keyboard shortcut to open add expense dialog
   useEffect(() => {
@@ -228,6 +234,7 @@ const Index = () => {
                 balances={balances} 
                 onSettle={handleSettle}
                 walletAddresses={DEMO_WALLET_ADDRESSES}
+                chainId={currentChainId}
               />
             </div>
 

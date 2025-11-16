@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Wallet, LogOut } from "lucide-react";
+import { Wallet, LogOut, Copy } from "lucide-react";
 import { useCircleSmartAccount } from "@/hooks/useCircleSmartAccount";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,8 @@ export function SmartAccountButton() {
         description: "Welcome back",
       });
       setConnectDialogOpen(false);
+      // Redirect to home page after successful login
+      setTimeout(() => navigate("/"), 100);
     } catch (err) {
       toast({
         title: "Connection failed",
@@ -44,6 +46,16 @@ export function SmartAccountButton() {
       });
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleCopyAddress = () => {
+    if (account) {
+      navigator.clipboard.writeText(account.address);
+      toast({
+        title: "Address copied!",
+        description: "Your account address has been copied to clipboard",
+      });
     }
   };
 
@@ -113,6 +125,11 @@ export function SmartAccountButton() {
           <Wallet className="h-4 w-4 mr-2" />
           View Account
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCopyAddress}>
+          <Copy className="h-4 w-4 mr-2" />
+          Copy Address
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out

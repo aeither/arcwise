@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { createPublicClient, parseUnits, formatUnits, type Hex, erc20Abi } from 'viem'
-import { baseSepolia } from 'viem/chains'
+import { useState, useEffect, useMemo } from 'react'
+import { createPublicClient, parseUnits, formatUnits, type Hex, erc20Abi, type Chain } from 'viem'
+import { baseSepolia, arcTestnet, arbitrumSepolia } from 'viem/chains'
 import {
   type P256Credential,
   type SmartAccount,
@@ -23,22 +23,30 @@ const clientUrl = import.meta.env.VITE_CLIENT_URL as string
 
 const USDC_DECIMALS = 6
 
-// Create Circle transports
+// Chain configurations with USDC addresses
+const CHAIN_CONFIGS: Record<number, { chain: Chain; path: string; usdcAddress: `0x${string}`; name: string }> = {
+  84532: {
+    chain: baseSepolia,
+    path: 'baseSepolia',
+    usdcAddress: ContractAddress.BaseSepolia_USDC,
+    name: 'Base Sepolia'
+  },
+  5042002: {
+    chain: arcTestnet,
+    path: 'arcTestnet',
+    usdcAddress: '0x3600000000000000000000000000000000000000',
+    name: 'Arc Testnet'
+  },
+  421614: {
+    chain: arbitrumSepolia,
+    path: 'arbitrumSepolia',
+    usdcAddress: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
+    name: 'Arbitrum Sepolia'
+  }
+}
+
+// Create Circle transports (passkey transport is chain-agnostic)
 const passkeyTransport = toPasskeyTransport(clientUrl, clientKey)
-const modularTransport = toModularTransport(`${clientUrl}/baseSepolia`, clientKey)
-
-// Create a public client
-const client = createPublicClient({
-  chain: baseSepolia,
-  transport: modularTransport,
-})
-
-// Create a bundler client with the modular transport
-const bundlerClient = createBundlerClient({
-  chain: baseSepolia,
-  transport: modularTransport,
-  paymaster: true,
-})
 
 export interface CircleSmartAccountState {
   account: SmartAccount | undefined
@@ -48,6 +56,8 @@ export interface CircleSmartAccountState {
   error: string | null
   userOpHash: Hex | null
   txHash: Hex | null
+  currentChainId: number
+  currentChainName: string
 }
 
 export interface CircleSmartAccountActions {
@@ -59,7 +69,7 @@ export interface CircleSmartAccountActions {
   clearTransaction: () => void
 }
 
-export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAccountActions {
+export function useCircleSmartAccount(chainId: number = 84532): CircleSmartAccountState & CircleSmartAccountActions {
   const [account, setAccount] = useState<SmartAccount | undefined>(undefined)
   const [credential, setCredential] = useState<P256Credential | null>(() =>
     typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('credential') || 'null') : null
@@ -72,11 +82,32 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
   const [userOpHash, setUserOpHash] = useState<Hex | null>(null)
   const [txHash, setTxHash] = useState<Hex | null>(null)
 
-  // Create smart account when credential is available
+  // Get chain configuration
+  const chainConfig = useMemo(() => CHAIN_CONFIGS[chainId] || CHAIN_CONFIGS[84532], [chainId])
+
+  // Create clients for the current chain
+  const { client, bundlerClient } = useMemo(() => {
+    const modularTransport = toModularTransport(`${clientUrl}/${chainConfig.path}`, clientKey)
+    
+    const newClient = createPublicClient({
+      chain: chainConfig.chain,
+      transport: modularTransport,
+    })
+
+    const newBundlerClient = createBundlerClient({
+      chain: chainConfig.chain,
+      transport: modularTransport,
+      paymaster: true,
+    })
+
+    return { client: newClient, bundlerClient: newBundlerClient }
+  }, [chainConfig])
+
+  // Create smart account when credential is available or chain changes
   useEffect(() => {
     if (!credential) return
 
-    // Create a circle smart account
+    // Create a circle smart account for the current chain
     toCircleSmartAccount({
       client,
       owner: toWebAuthnAccount({ credential }) as WebAuthnAccount,
@@ -86,7 +117,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
         console.error('Error creating smart account:', err)
         setError(err instanceof Error ? err.message : 'Failed to create smart account')
       })
-  }, [credential, username])
+  }, [credential, username, client])
 
   const register = async (usernameInput: string) => {
     try {
@@ -163,10 +194,10 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
       setUserOpHash(null)
       setTxHash(null)
 
-      // Create callData for USDC transfer
+      // Create callData for USDC transfer using current chain's USDC address
       const callData = encodeTransfer(
         to,
-        ContractAddress.BaseSepolia_USDC,
+        chainConfig.usdcAddress,
         parseUnits(amount, USDC_DECIMALS)
       )
 
@@ -209,7 +240,7 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
 
     try {
       const balance = await client.readContract({
-        address: ContractAddress.BaseSepolia_USDC,
+        address: chainConfig.usdcAddress,
         abi: erc20Abi,
         functionName: 'balanceOf',
         args: [account.address],
@@ -230,6 +261,8 @@ export function useCircleSmartAccount(): CircleSmartAccountState & CircleSmartAc
     error,
     userOpHash,
     txHash,
+    currentChainId: chainId,
+    currentChainName: chainConfig.name,
     register,
     login,
     logout,

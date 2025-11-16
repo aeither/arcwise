@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { Copy, LogOut, Send, Wallet, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Copy, Send, Wallet, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { arbitrumSepolia, arcTestnet, baseSepolia } from 'wagmi/chains'
 import { useSearchParams } from 'react-router-dom'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 // Only chains that Circle's Modular Wallets SDK actually supports
 // Using Wagmi chain configs for explorer info
@@ -21,6 +22,13 @@ const SUPPORTED_CHAINS = [
   // { id: 11155420, name: 'Optimism Sepolia', path: 'optimismSepolia' },
   // { id: 80002, name: 'Polygon Amoy', path: 'polygonAmoy' },
   // { id: 43113, name: 'Avalanche Fuji', path: 'avalancheFuji' },
+]
+
+// Demo contacts - same as in Index page
+const CONTACTS = [
+  { name: 'Olivia', address: '0x742D35CC6634c0532925A3b844BC9E7595F0BEb0' },
+  { name: 'Juan', address: '0xdD2FD4581271e230360230F9337D5c0430Bf44C0' },
+  { name: 'Lucas', address: '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199' },
 ]
 
 const CircleAccount = () => {
@@ -44,15 +52,29 @@ const CircleAccount = () => {
     sendUSDC,
     checkUSDCBalance,
     clearTransaction,
-  } = useCircleSmartAccount()
+  } = useCircleSmartAccount(currentChainId)
 
   const { toast } = useToast()
 
   // Form states
   const [registerUsername, setRegisterUsername] = useState('')
+  const [selectedContact, setSelectedContact] = useState<string>('')
   const [transferTo, setTransferTo] = useState('')
   const [transferAmount, setTransferAmount] = useState('')
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+
+  // Handle contact selection
+  const handleContactSelect = (contactName: string) => {
+    setSelectedContact(contactName)
+    if (contactName === 'custom') {
+      setTransferTo('')
+    } else {
+      const contact = CONTACTS.find(c => c.name === contactName)
+      if (contact) {
+        setTransferTo(contact.address)
+      }
+    }
+  }
 
   // Check USDC balance when account is available
   useEffect(() => {
@@ -81,6 +103,8 @@ const CircleAccount = () => {
         description: 'Your Circle Smart Account has been created',
       })
       setRegisterUsername('')
+      // Redirect to home page after successful registration
+      window.location.href = '/'
     } catch (err) {
       toast({
         title: 'Registration failed',
@@ -97,6 +121,8 @@ const CircleAccount = () => {
         title: 'Login successful!',
         description: 'Welcome back to your Circle Smart Account',
       })
+      // Redirect to home page after successful login
+      window.location.href = '/'
     } catch (err) {
       toast({
         title: 'Login failed',
@@ -106,13 +132,6 @@ const CircleAccount = () => {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    toast({
-      title: 'Logged out',
-      description: 'You have been logged out of your Circle Smart Account',
-    })
-  }
 
   const handleSendUSDC = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -154,6 +173,7 @@ const CircleAccount = () => {
       // Refresh balance
       const newBalance = await checkUSDCBalance()
       setUsdcBalance(newBalance)
+      setSelectedContact('')
       setTransferTo('')
       setTransferAmount('')
     } catch (err) {
@@ -328,19 +348,11 @@ const CircleAccount = () => {
             {/* Account Info */}
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Your Account</CardTitle>
-                    <CardDescription>
-                      {currentChainName}
-                      <span className="text-xs text-muted-foreground ml-2">(Circle Smart Account)</span>
-                    </CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={handleLogout}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
+                <CardTitle>Your Account</CardTitle>
+                <CardDescription>
+                  {currentChainName}
+                  <span className="text-xs text-muted-foreground ml-2">(Circle Smart Account)</span>
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {username && (
@@ -392,14 +404,36 @@ const CircleAccount = () => {
               <CardContent>
                 <form onSubmit={handleSendUSDC} className="space-y-4">
                   <div>
+                    <Label htmlFor="contact">Select Contact</Label>
+                    <Select value={selectedContact} onValueChange={handleContactSelect}>
+                      <SelectTrigger id="contact">
+                        <SelectValue placeholder="Choose a contact or enter custom address" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONTACTS.map((contact) => (
+                          <SelectItem key={contact.name} value={contact.name}>
+                            {contact.name} ({contact.address.slice(0, 6)}...{contact.address.slice(-4)})
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Custom address</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
                     <Label htmlFor="to">Recipient Address</Label>
                     <Input
                       id="to"
                       type="text"
                       placeholder="0x..."
                       value={transferTo}
-                      onChange={(e) => setTransferTo(e.target.value)}
-                      disabled={isLoading}
+                      onChange={(e) => {
+                        setTransferTo(e.target.value)
+                        if (selectedContact !== 'custom') {
+                          setSelectedContact('custom')
+                        }
+                      }}
+                      disabled={isLoading || (selectedContact !== '' && selectedContact !== 'custom')}
                     />
                   </div>
 
