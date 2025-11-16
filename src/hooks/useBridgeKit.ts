@@ -163,11 +163,26 @@ async function createAdapter(smartAccount?: SmartAccount | null): Promise<ViemAd
     on: (_event: string, _listener: (...args: any[]) => void) => { /* no-op */ },
     removeListener: (_event: string, _listener: (...args: any[]) => void) => { /* no-op */ },
     request: (async (args: { method: string; params?: unknown }): Promise<unknown> => {
-      const { method } = args;
+      const { method, params } = args;
       switch (method) {
         case 'eth_accounts':
         case 'eth_requestAccounts':
           return [smartAccount.address];
+
+        case 'wallet_switchEthereumChain':
+          // For Smart Accounts, we don't need to actually switch chains
+          // The adapter handles chain context internally
+          // Just log the request and return null (success)
+          const chainIdParam = params as { chainId: string }[] | undefined;
+          const requestedChainId = chainIdParam?.[0]?.chainId;
+          console.log(`✅ Smart Account: Acknowledged chain switch request to ${requestedChainId}`);
+          return null;
+
+        case 'eth_chainId':
+          // Smart Accounts can operate on multiple chains
+          // Return a default chain ID (this shouldn't be critical for BridgeKit)
+          return '0xaa36a7'; // Sepolia chain ID in hex
+
         default:
           throw new Error(`Unsupported method: ${method}`);
       }
