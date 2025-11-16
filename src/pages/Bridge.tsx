@@ -157,14 +157,14 @@ export default function Bridge() {
           <Card className="max-w-md mx-auto text-center">
             <CardHeader>
               <ArrowLeftRight size={48} className="mx-auto mb-4 text-muted-foreground" />
-              <CardTitle className="text-xl">Connect Your Smart Account</CardTitle>
+              <CardTitle className="text-xl">Sign In Required</CardTitle>
               <CardDescription>
-                Please login to your Circle Smart Account to bridge USDC to Arc Testnet
+                Please sign in to add funds to your account
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={() => window.location.href = '/account'} className="w-full">
-                Go to Circle Account
+                Go to Account
               </Button>
             </CardContent>
           </Card>
@@ -182,15 +182,18 @@ export default function Bridge() {
         <div className="max-w-md mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Bridge USDC to Arc Testnet</CardTitle>
+            <CardTitle className="text-2xl">Add Funds</CardTitle>
             <CardDescription>
-              Transfer USDC from testnet chains to Arc Testnet
+              Transfer money to your account instantly
+              <span className="block text-xs text-muted-foreground mt-1">
+                ✨ Powered by Circle BridgeKit - supporting Arc Testnet
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Source Chain Selection */}
             <div className="space-y-2">
-              <Label>From Chain</Label>
+              <Label>From Network</Label>
               <Select
                 value={sourceChainId.toString()}
                 onValueChange={(value) => setSourceChainId(parseInt(value))}
@@ -215,18 +218,19 @@ export default function Bridge() {
             </div>
 
             <div className="space-y-2">
-              <Label>To Chain</Label>
+              <Label>To Network</Label>
               <div className="px-4 py-3 bg-muted rounded-lg">
                 <span className="font-semibold">{destinationChainName}</span>
+                <span className="text-xs text-muted-foreground ml-2">(Arc Testnet)</span>
               </div>
             </div>
 
             {/* Token Selection (USDC only) */}
             <div className="space-y-2">
-              <Label>Token</Label>
+              <Label>Currency</Label>
               <div className="px-4 py-3 bg-muted rounded-lg">
                 <span className="font-semibold">USDC</span>
-                <span className="text-sm text-muted-foreground ml-2">(USD Coin)</span>
+                <span className="text-sm text-muted-foreground ml-2">(Digital Dollar)</span>
               </div>
             </div>
 
@@ -244,7 +248,7 @@ export default function Bridge() {
             ) : (
               <div className="p-3 bg-muted rounded-lg">
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs text-muted-foreground">{sourceChainName} USDC Balance</p>
+                  <p className="text-xs text-muted-foreground">Available Balance ({sourceChainName})</p>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -256,7 +260,7 @@ export default function Bridge() {
                     <RefreshCw size={14} className={isLoadingBalance ? 'animate-spin' : ''} />
                   </Button>
                 </div>
-                <p className="text-lg font-semibold">{displayBalance} USDC</p>
+                <p className="text-lg font-semibold">${displayBalance}</p>
               </div>
             )}
 
@@ -508,12 +512,12 @@ export default function Bridge() {
               {state.isLoading ? (
                 <>
                   <Loader2 size={16} className="animate-spin mr-2" />
-                  {state.step === 'switching-network' ? 'Switching Network...' : 'Bridging...'}
+                  {state.step === 'switching-network' ? 'Preparing...' : 'Transferring...'}
                 </>
               ) : state.step === 'success' ? (
-                'Bridge Complete'
+                'Transfer Complete'
               ) : (
-                `Bridge ${amount || '0'} USDC`
+                `Add $${amount || '0'}`
               )}
             </Button>
 
@@ -531,7 +535,7 @@ export default function Bridge() {
                 }}
                 className="w-full"
               >
-                Bridge Again
+                Add More Funds
               </Button>
             )}
           </CardContent>
@@ -541,24 +545,20 @@ export default function Bridge() {
         <Card className="mt-6">
           <CardContent className="pt-6">
             <div className="text-xs text-muted-foreground space-y-2">
-              <p className="font-semibold">Bridge Process:</p>
-              <p><strong>With Circle Smart Account:</strong> Gasless bridging with biometric authentication (Face ID/Touch ID)</p>
-              <p><strong>With MetaMask:</strong> 3 wallet popups for approve, send, and receive steps</p>
+              <p className="font-semibold">How it works:</p>
+              <p>👆 <strong>Fast & Secure:</strong> Authenticate with Face ID/Touch ID to transfer funds instantly</p>
+              <p>⚡ <strong>No Fees:</strong> All transfers are free thanks to Circle Paymaster sponsorship</p>
+              <p>🌐 <strong>Cross-Chain:</strong> Seamlessly move money between networks</p>
 
               <p className="mt-3 pt-3 border-t">
-                <strong>Advanced Features:</strong>
+                <strong>Advanced Options:</strong>
               </p>
-              <p>• <strong>Recipient Address:</strong> Send USDC to a different wallet by enabling "Send to a different wallet address"</p>
-              <p>• <strong>Cost Estimation:</strong> Click "Find Cheapest Route" to compare fees across different chains</p>
-              <p>• <strong>Supported Chains:</strong> Click "View Supported Chains" to see all chains supported by Bridge Kit</p>
+              <p>• <strong>Send to Others:</strong> Enable "Send to a different wallet address" to transfer to someone else</p>
+              <p>• <strong>Best Route:</strong> Click "Find Cheapest Route" to compare fees (when applicable)</p>
 
               <p className="mt-3 pt-3 border-t text-xs">
-                <strong>✅ All routes now supported:</strong> Ethereum Sepolia, Base Sepolia, and Arbitrum Sepolia can all bridge to Arc Testnet.
-                All three chains should work with 3 MetaMask popups.
-              </p>
-              <p className="mt-2 text-xs">
-                <strong>Debugging tip:</strong> If bridging fails, open your browser's Console (F12) to see detailed logs
-                about chain matching and error details.
+                <strong>Technology:</strong> Built with Circle BridgeKit (CCTP), Circle Gateway, and deployed on Arc Testnet.
+                Supports Ethereum Sepolia, Base Sepolia, and Arbitrum Sepolia.
               </p>
             </div>
           </CardContent>

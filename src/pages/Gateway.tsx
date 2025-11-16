@@ -143,20 +143,23 @@ const Gateway = () => {
         {!isConnected && (
           <Card>
             <CardHeader>
-              <CardTitle>Connect Your Smart Account</CardTitle>
+              <CardTitle>Sign In Required</CardTitle>
               <CardDescription>
-                Please login to your Circle Smart Account to use Gateway
+                Please sign in to view your total balance
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  Circle Gateway enables cross-chain USDC transfers with a unified balance across multiple chains.
+                  View all your money in one place, across different networks.
+                  <span className="block text-xs text-muted-foreground mt-1">
+                    ✨ Powered by Circle Gateway
+                  </span>
                 </AlertDescription>
               </Alert>
               <Button onClick={() => window.location.href = '/account'} className="w-full">
-                Go to Circle Account
+                Go to Account
               </Button>
             </CardContent>
           </Card>
@@ -170,8 +173,11 @@ const Gateway = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Total Gateway Balance</CardTitle>
-                    <CardDescription>Unified USDC across all chains</CardDescription>
+                    <CardTitle>Total Balance</CardTitle>
+                    <CardDescription>
+                      Your money across all networks
+                      <span className="text-xs text-muted-foreground ml-1">(Circle Gateway)</span>
+                    </CardDescription>
                   </div>
                   <Button
                     variant="outline"
@@ -189,7 +195,7 @@ const Gateway = () => {
                   {isLoading ? (
                     <span className="text-muted-foreground">Loading...</span>
                   ) : (
-                    <span>{totalBalance} USDC</span>
+                    <span>${totalBalance}</span>
                   )}
                 </div>
 
@@ -198,19 +204,20 @@ const Gateway = () => {
                     <DialogTrigger asChild>
                       <Button className="flex-1">
                         <ArrowRightLeft className="h-4 w-4 mr-2" />
-                        Transfer Cross-Chain
+                        Send Money
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Transfer Cross-Chain</DialogTitle>
+                        <DialogTitle>Send Money</DialogTitle>
                         <DialogDescription>
-                          Transfer your unified USDC balance to any supported chain
+                          Send to any network instantly
+                          <span className="text-xs text-muted-foreground ml-1">(Circle Gateway cross-chain)</span>
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="transfer-chain">Destination Chain</Label>
+                          <Label htmlFor="transfer-chain">To Network</Label>
                           <Select
                             onValueChange={(value) => {
                               const chain = SUPPORTED_CHAINS.find(c => c.name === value)
@@ -218,7 +225,7 @@ const Gateway = () => {
                             }}
                           >
                             <SelectTrigger id="transfer-chain">
-                              <SelectValue placeholder="Select a chain" />
+                              <SelectValue placeholder="Select network" />
                             </SelectTrigger>
                             <SelectContent>
                               {SUPPORTED_CHAINS.map((chain) => (
@@ -242,7 +249,7 @@ const Gateway = () => {
                         </div>
 
                         <div>
-                          <Label htmlFor="transfer-amount">Amount (USDC)</Label>
+                          <Label htmlFor="transfer-amount">Amount</Label>
                           <Input
                             id="transfer-amount"
                             type="number"
@@ -254,14 +261,14 @@ const Gateway = () => {
                             onChange={(e) => setTransferAmount(e.target.value)}
                           />
                           <p className="text-sm text-muted-foreground mt-1">
-                            Available: {totalBalance} USDC
+                            Available: ${totalBalance}
                           </p>
                         </div>
 
                         <Alert>
                           <Info className="h-4 w-4" />
                           <AlertDescription className="text-sm">
-                            Transfer fee: 0.005% + base gas fee. Transfer typically completes in under 500ms.
+                            ⚡ Instant transfer (under 500ms) with minimal fees (0.005%)
                           </AlertDescription>
                         </Alert>
 
@@ -278,9 +285,10 @@ const Gateway = () => {
             {/* Per-Chain Balances */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Balances by Chain</CardTitle>
+                <CardTitle className="text-base">Balance by Network</CardTitle>
                 <CardDescription className="text-xs">
-                  View and deposit USDC on individual chains
+                  View your balance on each network
+                  <span className="text-muted-foreground ml-1">(W=Wallet, G=Gateway)</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>

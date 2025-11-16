@@ -24,13 +24,13 @@ interface Balance {
   amount: number;
 }
 
-const INITIAL_PEOPLE = ["Alice", "Bob", "Charlie"];
+const INITIAL_PEOPLE = ["Jani", "Armando", "Giovanni"];
 
 // Demo wallet addresses - in production, users would add these themselves
 const DEMO_WALLET_ADDRESSES: Record<string, string> = {
-  Alice: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
-  Bob: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
-  Charlie: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
+  Jani: "0x742D35CC6634c0532925A3b844BC9E7595F0BEb0",
+  Armando: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
+  Giovanni: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
 };
 
 const Index = () => {
@@ -149,52 +149,70 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container max-w-4xl mx-auto px-4 py-8">
-        {/* Circle Faucet Banner */}
-        <Alert className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <AlertDescription className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex-1">
-              <p className="font-semibold text-blue-900 mb-1">Need test USDC?</p>
-              <p className="text-sm text-blue-700">
-                Get free test USDC from the Circle Faucet to try out gasless settlements and cross-chain transfers
+      <div className="container max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+        {/* Welcome Banner - Web2 Style */}
+        <Alert className="mb-4 sm:mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+          <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1 text-sm sm:text-base">👋 Welcome to ArcWise</p>
+              <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
+                Split expenses instantly with friends. Settle up with one tap - no gas fees!
+              </p>
+              <p className="text-[10px] sm:text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">
+                ✨ Powered by Circle Smart Wallet, BridgeKit, Gateway & Arc Testnet
               </p>
             </div>
             <Button
               onClick={() => window.open('https://faucet.circle.com', '_blank')}
-              variant="default"
+              variant="outline"
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900 w-full sm:w-auto shrink-0 text-xs sm:text-sm"
             >
-              Get Test USDC
-              <ExternalLink className="h-4 w-4 ml-2" />
+              Get Test Money
+              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
             </Button>
           </AlertDescription>
         </Alert>
 
-        <div className="grid gap-6 md:grid-cols-3 mb-8">
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Receipt className="h-5 w-5 text-primary" />
-              <h2 className="text-2xl font-semibold">Recent Expenses</h2>
+        {/* Mobile-optimized layout */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1fr_380px] mb-8">
+          {/* Main Content Area */}
+          <div className="space-y-4 order-2 lg:order-1">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">Recent Expenses</h2>
+              </div>
+              {expenses.length > 0 && (
+                <Button
+                  onClick={() => setIsDialogOpen(true)}
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+
+            {/* Empty State */}
             {expenses.length === 0 ? (
-              <div className="text-center py-16 bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl border-2 border-dashed border-border animate-fade-in">
-                <Receipt className="h-16 w-16 mx-auto text-muted-foreground mb-4 animate-bounce-subtle" />
-                <p className="text-lg font-medium text-foreground mb-1">No expenses yet</p>
-                <p className="text-sm text-muted-foreground mb-4">
+              <div className="text-center py-12 sm:py-16 bg-gradient-to-br from-muted/30 to-muted/10 rounded-lg sm:rounded-xl border-2 border-dashed border-border animate-fade-in">
+                <Receipt className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-muted-foreground mb-3 sm:mb-4 animate-bounce-subtle" />
+                <p className="text-base sm:text-lg font-medium text-foreground mb-1">No expenses yet</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mb-4 px-4">
                   Start tracking by adding your first expense
                 </p>
                 <Button 
-                  variant="outline" 
                   onClick={() => setIsDialogOpen(true)}
                   className="hover:scale-105 transition-transform"
+                  size="default"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add First Expense
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {expenses.map((expense, index) => (
                   <ExpenseCard key={expense.id} expense={expense} index={index} />
                 ))}
@@ -202,17 +220,23 @@ const Index = () => {
             )}
           </div>
 
-          <div className="md:col-span-1 space-y-4">
-            <BalanceSummary 
-              balances={balances} 
-              onSettle={handleSettle}
-              walletAddresses={DEMO_WALLET_ADDRESSES}
-            />
+          {/* Sidebar - Balances & Settlements */}
+          <div className="space-y-4 order-1 lg:order-2">
+            {/* Balances Section */}
+            <div>
+              <BalanceSummary 
+                balances={balances} 
+                onSettle={handleSettle}
+                walletAddresses={DEMO_WALLET_ADDRESSES}
+              />
+            </div>
+
+            {/* Settlements History */}
             {settlements.length > 0 && (
               <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <History className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-semibold">Settlements</h2>
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <History className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h2 className="text-base sm:text-lg lg:text-xl font-semibold">Settlements</h2>
                 </div>
                 <SettlementHistory settlements={settlements} />
               </div>
@@ -220,6 +244,7 @@ const Index = () => {
           </div>
         </div>
       </div>
+
 
       <AddExpenseDialog
         open={isDialogOpen}

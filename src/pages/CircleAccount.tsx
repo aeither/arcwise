@@ -208,15 +208,15 @@ const CircleAccount = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Welcome to Circle Smart Account</CardTitle>
+                <CardTitle>Sign in to ArcWise</CardTitle>
                 <CardDescription>
-                  Create a gasless smart account using your device's biometric authentication (Face ID, Touch ID, or Windows Hello)
+                  Sign in with Face ID, Touch ID, or fingerprint - no passwords needed!
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Register Section */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">New User? Register</h3>
+                  <h3 className="text-lg font-semibold mb-4">Create Account</h3>
                   <form onSubmit={handleRegister} className="space-y-4">
                     <div>
                       <Label htmlFor="username">Username</Label>
@@ -230,7 +230,7 @@ const CircleAccount = () => {
                       />
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? 'Registering...' : 'Register with Passkey'}
+                      {isLoading ? 'Creating Account...' : 'Sign Up with Face ID'}
                     </Button>
                   </form>
                 </div>
@@ -246,17 +246,21 @@ const CircleAccount = () => {
 
                 {/* Login Section */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Already have an account? Login</h3>
+                  <h3 className="text-lg font-semibold mb-4">Already have an account?</h3>
                   <Button onClick={handleLogin} variant="outline" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login with Passkey'}
+                    {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </div>
 
                 {/* Info */}
                 <Alert>
                   <AlertDescription className="text-sm">
-                    <strong>What is a Passkey?</strong> A passkey uses your device's biometric authentication (like Face ID or fingerprint)
-                    to securely create and access your smart account. No passwords needed!
+                    <strong>Secure & Simple:</strong> Use Face ID or fingerprint to access your account. 
+                    No passwords to remember!
+                    <br />
+                    <span className="text-xs text-muted-foreground mt-1 block">
+                      ✨ Built with Circle Modular Wallets & Paymaster for gasless transactions
+                    </span>
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -264,24 +268,27 @@ const CircleAccount = () => {
 
             {/* Features */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card>
+            <Card>
                 <CardHeader>
                   <CardTitle className="text-base">🔒 Secure</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Biometric authentication keeps your account safe
+                    Face ID keeps your money safe
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">⛽ Gasless</CardTitle>
+                  <CardTitle className="text-base">⚡ Instant</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    Send USDC without paying gas fees
+                    Send money instantly - no fees
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    (Circle Paymaster)
                   </p>
                 </CardContent>
               </Card>
@@ -292,7 +299,7 @@ const CircleAccount = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    No seed phrases or complex wallets to manage
+                    No passwords or recovery phrases
                   </p>
                 </CardContent>
               </Card>
@@ -320,12 +327,15 @@ const CircleAccount = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Your Smart Account</CardTitle>
-                    <CardDescription>{currentChainName}</CardDescription>
+                    <CardTitle>Your Account</CardTitle>
+                    <CardDescription>
+                      {currentChainName}
+                      <span className="text-xs text-muted-foreground ml-2">(Circle Smart Account)</span>
+                    </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                    Sign Out
                   </Button>
                 </div>
               </CardHeader>
@@ -370,9 +380,10 @@ const CircleAccount = () => {
             {/* Send USDC */}
             <Card>
               <CardHeader>
-                <CardTitle>Send USDC (Gasless)</CardTitle>
+                <CardTitle>Send Money</CardTitle>
                 <CardDescription>
-                  Transfer USDC without paying gas fees - sponsored by Circle Paymaster
+                  Send instantly with no fees
+                  <span className="text-xs text-muted-foreground ml-1">(powered by Circle Paymaster)</span>
                 </CardDescription>
               </CardHeader>
               <CardContent>

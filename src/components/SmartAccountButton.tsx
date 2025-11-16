@@ -32,8 +32,8 @@ export function SmartAccountButton() {
       setIsConnecting(true);
       await login();
       toast({
-        title: "Connected!",
-        description: "Successfully logged in with your Smart Account",
+        title: "Signed in!",
+        description: "Welcome back",
       });
       setConnectDialogOpen(false);
     } catch (err) {
@@ -63,9 +63,9 @@ export function SmartAccountButton() {
         <Dialog open={connectDialogOpen} onOpenChange={setConnectDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Connect Smart Account</DialogTitle>
+              <DialogTitle>Sign In</DialogTitle>
               <DialogDescription>
-                Login with your passkey or create a new account
+                Sign in with Face ID or create a new account
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -74,7 +74,7 @@ export function SmartAccountButton() {
                 className="w-full"
                 disabled={isConnecting}
               >
-                {isConnecting ? "Connecting..." : "Login with Passkey"}
+                {isConnecting ? "Signing in..." : "Sign In"}
               </Button>
               <Button
                 onClick={() => {
@@ -84,7 +84,7 @@ export function SmartAccountButton() {
                 variant="outline"
                 className="w-full"
               >
-                Register New Account
+                Create Account
               </Button>
             </div>
           </DialogContent>
@@ -107,7 +107,7 @@ export function SmartAccountButton() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Smart Account</DropdownMenuLabel>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate("/account")}>
           <Wallet className="h-4 w-4 mr-2" />
@@ -115,7 +115,7 @@ export function SmartAccountButton() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={logout}>
           <LogOut className="h-4 w-4 mr-2" />
-          Logout
+          Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

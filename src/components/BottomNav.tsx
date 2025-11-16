@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeftRight, Wallet, DollarSign } from "lucide-react";
+import { ArrowLeftRight, PlusCircle, UserCircle, Send } from "lucide-react";
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -12,14 +12,19 @@ export const BottomNav = () => {
       label: "Split",
     },
     {
+      path: "/bridge",
+      icon: PlusCircle,
+      label: "Add Funds",
+    },
+    {
       path: "/account",
-      icon: Wallet,
-      label: "Account",
+      icon: Send,
+      label: "Send",
     },
     {
       path: "/gateway",
-      icon: DollarSign,
-      label: "Balance",
+      icon: UserCircle,
+      label: "Account",
     },
   ];
 
@@ -34,7 +39,7 @@ export const BottomNav = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent pointer-events-none" />
 
           {/* Navigation items */}
-          <div className="relative grid grid-cols-3 gap-1 p-2">
+          <div className="relative grid grid-cols-4 gap-1 p-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -59,9 +64,8 @@ export const BottomNav = () => {
                   {/* Icon */}
                   <div className="relative">
                     <Icon
-                      className={`h-5 w-5 transition-colors ${
-                        active ? "text-primary" : "text-foreground/70"
-                      }`}
+                      className={`h-5 w-5 transition-colors ${active ? "text-primary" : "text-foreground/70"
+                        }`}
                     />
                   </div>
 
