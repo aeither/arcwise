@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeftRight, Wallet, ArrowUpDown, Zap } from "lucide-react";
+import { ArrowLeftRight, Wallet, DollarSign } from "lucide-react";
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -7,24 +7,19 @@ export const BottomNav = () => {
 
   const navItems = [
     {
-      path: "/bridge",
+      path: "/",
       icon: ArrowLeftRight,
-      label: "Bridge",
+      label: "Split",
     },
     {
-      path: "/circle-account",
+      path: "/account",
       icon: Wallet,
       label: "Account",
     },
     {
       path: "/gateway",
-      icon: ArrowUpDown,
-      label: "Gateway",
-    },
-    {
-      path: "/gasless-bridge",
-      icon: Zap,
-      label: "Gasless",
+      icon: DollarSign,
+      label: "Balance",
     },
   ];
 
@@ -39,7 +34,7 @@ export const BottomNav = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent pointer-events-none" />
 
           {/* Navigation items */}
-          <div className="relative grid grid-cols-4 gap-1 p-2">
+          <div className="relative grid grid-cols-3 gap-1 p-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);

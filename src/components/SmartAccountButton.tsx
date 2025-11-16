@@ -79,7 +79,7 @@ export function SmartAccountButton() {
               <Button
                 onClick={() => {
                   setConnectDialogOpen(false);
-                  navigate("/circle-account");
+                  navigate("/account");
                 }}
                 variant="outline"
                 className="w-full"
@@ -109,7 +109,7 @@ export function SmartAccountButton() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Smart Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/circle-account")}>
+        <DropdownMenuItem onClick={() => navigate("/account")}>
           <Wallet className="h-4 w-4 mr-2" />
           View Account
         </DropdownMenuItem>

@@ -364,27 +364,6 @@ const CircleAccount = () => {
                     </p>
                   )}
                 </div>
-
-                <Alert className="border-orange-500 bg-orange-50">
-                  <AlertDescription className="text-sm">
-                    <strong>⚠️ IMPORTANT:</strong> Before sending USDC, you must fund this account with test USDC:
-                    <ol className="mt-2 ml-4 list-decimal space-y-1">
-                      <li>Copy the account address above</li>
-                      <li>Go to <a
-                        href="https://faucet.circle.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline font-semibold"
-                      >
-                        Circle Faucet
-                      </a></li>
-                      <li>Select "{currentChainName}" network</li>
-                      <li>Paste your account address and request USDC</li>
-                      <li>Wait ~1 minute for the USDC to arrive</li>
-                    </ol>
-                    <p className="mt-2 font-semibold">You need at least 1 USDC to send gasless transactions!</p>
-                  </AlertDescription>
-                </Alert>
               </CardContent>
             </Card>
 

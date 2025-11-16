@@ -10,19 +10,9 @@ import { AlertCircle, ArrowLeftRight, CheckCircle, ExternalLink, Loader2, Refres
 import { useEffect, useState } from 'react';
 import { useSwitchChain } from 'wagmi';
 import { useCircleSmartAccount } from '@/hooks/useCircleSmartAccount';
-import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID, ARBITRUM_SEPOLIA_CHAIN_ID, SUPPORTED_VIEM_CHAINS } from '../hooks/useBridgeKit';
+import { CHAIN_NAMES, useBridgeKit, ARC_CHAIN_ID, SEPOLIA_CHAIN_ID, SOURCE_CHAINS, type CostEstimate } from '../hooks/useBridgeKit';
 import { BridgeKit } from '@circle-fin/bridge-kit';
-import type { BridgeParams } from '@circle-fin/bridge-kit';
-import { createAdapterFromProvider } from '@circle-fin/adapter-viem-v2';
-import type { EIP1193Provider } from 'viem';
 import { isAddress } from 'viem';
-
-// Source chains that can bridge to Arc Testnet
-const SOURCE_CHAINS = [
-  { id: SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[SEPOLIA_CHAIN_ID] },
-  { id: BASE_SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[BASE_SEPOLIA_CHAIN_ID] },
-  { id: ARBITRUM_SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[ARBITRUM_SEPOLIA_CHAIN_ID] },
-];
 
 // Block explorer URLs
 const BLOCK_EXPLORERS: Record<number, string> = {
@@ -32,20 +22,10 @@ const BLOCK_EXPLORERS: Record<number, string> = {
   421614: 'https://sepolia.arbiscan.io',
 };
 
-interface CostEstimate {
-  chainId: number;
-  chainName: string;
-  gasFee: string;
-  providerFee: string;
-  totalFee: string;
-  isLoading: boolean;
-  error?: string;
-}
-
 export default function Bridge() {
   const { account } = useCircleSmartAccount();
   const { switchChain } = useSwitchChain();
-  const { state, tokenBalance, isLoadingBalance, balanceError, fetchTokenBalance, bridge, reset } = useBridgeKit({
+  const { state, tokenBalance, isLoadingBalance, balanceError, fetchTokenBalance, bridge, reset, estimateCosts } = useBridgeKit({
     accountAddress: account?.address,
     smartAccount: account, // Pass the full smart account instance for bridging
   });
@@ -97,109 +77,16 @@ export default function Bridge() {
   };
 
   // Estimate costs for all routes
-  const estimateCosts = async () => {
-    if (!amount || parseFloat(amount) <= 0 || !window.ethereum) {
+  const handleEstimateCosts = async () => {
+    if (!amount || parseFloat(amount) <= 0) {
       return;
     }
 
     setIsEstimating(true);
     setShowEstimates(true);
 
-    const estimates: CostEstimate[] = SOURCE_CHAINS.map(chain => ({
-      chainId: chain.id,
-      chainName: chain.name,
-      gasFee: '...',
-      providerFee: '...',
-      totalFee: '...',
-      isLoading: true,
-    }));
-
-    setCostEstimates(estimates);
-
     try {
-      const kit = new BridgeKit();
-      const adapter = await createAdapterFromProvider({
-        provider: window.ethereum as EIP1193Provider,
-        capabilities: {
-          addressContext: 'user-controlled',
-          supportedChains: SUPPORTED_VIEM_CHAINS,
-        },
-      });
-
-      const supportedChains = kit.getSupportedChains();
-
-      // Estimate costs for each source chain
-      const estimatePromises = SOURCE_CHAINS.map(async (chain) => {
-        try {
-          // Find source and destination chains in Bridge Kit
-          let sourceChain = supportedChains.find((c: any) => {
-            const isEVM = 'chainId' in c;
-            if (!isEVM) return false;
-            return c.chainId === chain.id;
-          });
-
-          // Fallback: search by name
-          if (!sourceChain) {
-            const chainName = CHAIN_NAMES[chain.id];
-            if (chainName) {
-              const searchTerms = chainName.toLowerCase().split(' ');
-              sourceChain = supportedChains.find((c: any) => {
-                const name = c.name.toLowerCase();
-                return searchTerms.some(term => name.includes(term));
-              });
-            }
-          }
-
-          let destChain = supportedChains.find((c: any) => {
-            const isEVM = 'chainId' in c;
-            if (!isEVM) return false;
-            return c.chainId === ARC_CHAIN_ID;
-          });
-
-          // Fallback for Arc
-          if (!destChain) {
-            destChain = supportedChains.find((c: any) => c.name.toLowerCase().includes('arc'));
-          }
-
-          if (!sourceChain || !destChain) {
-            throw new Error(`Bridge route not supported`);
-          }
-
-          const params: BridgeParams = {
-            from: { adapter, chain: sourceChain.chain },
-            to: { adapter, chain: destChain.chain },
-            amount: amount,
-          };
-
-          const estimate = await kit.estimate(params);
-
-          const gasFee = estimate.fees.find((f: any) => f.type === 'gas')?.amount || '0';
-          const providerFee = estimate.fees.find((f: any) => f.type === 'provider')?.amount || '0';
-          const total = (parseFloat(gasFee) + parseFloat(providerFee)).toFixed(6);
-
-          return {
-            chainId: chain.id,
-            chainName: chain.name,
-            gasFee: `${gasFee} USDC`,
-            providerFee: `${providerFee} USDC`,
-            totalFee: `${total} USDC`,
-            isLoading: false,
-          };
-        } catch (error: any) {
-          console.error(`Failed to estimate for ${chain.name}:`, error);
-          return {
-            chainId: chain.id,
-            chainName: chain.name,
-            gasFee: 'N/A',
-            providerFee: 'N/A',
-            totalFee: 'N/A',
-            isLoading: false,
-            error: error.message?.includes('not supported') ? 'Route not supported' : 'Failed to estimate',
-          };
-        }
-      });
-
-      const results = await Promise.all(estimatePromises);
+      const results = await estimateCosts(amount);
       setCostEstimates(results);
 
       // Auto-select the cheapest route
@@ -276,7 +163,7 @@ export default function Bridge() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => window.location.href = '/circle-account'} className="w-full">
+              <Button onClick={() => window.location.href = '/account'} className="w-full">
                 Go to Circle Account
               </Button>
             </CardContent>
@@ -462,7 +349,7 @@ export default function Bridge() {
             {/* Estimate Costs Button */}
             <Button
               variant="outline"
-              onClick={estimateCosts}
+              onClick={handleEstimateCosts}
               disabled={!amount || parseFloat(amount) <= 0 || isEstimating || state.isLoading}
               className="w-full"
             >

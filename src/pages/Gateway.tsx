@@ -131,10 +131,10 @@ const Gateway = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-4">
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-4">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -155,7 +155,7 @@ const Gateway = () => {
                   Circle Gateway enables cross-chain USDC transfers with a unified balance across multiple chains.
                 </AlertDescription>
               </Alert>
-              <Button onClick={() => window.location.href = '/circle-account'} className="w-full">
+              <Button onClick={() => window.location.href = '/account'} className="w-full">
                 Go to Circle Account
               </Button>
             </CardContent>
@@ -164,7 +164,7 @@ const Gateway = () => {
 
         {/* Connected View */}
         {isConnected && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Consolidated Balance Card */}
             <Card>
               <CardHeader>
@@ -185,7 +185,7 @@ const Gateway = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold mb-4">
+                <div className="text-3xl font-bold mb-3">
                   {isLoading ? (
                     <span className="text-muted-foreground">Loading...</span>
                   ) : (
@@ -277,14 +277,14 @@ const Gateway = () => {
 
             {/* Per-Chain Balances */}
             <Card>
-              <CardHeader>
-                <CardTitle>Balances by Chain</CardTitle>
-                <CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Balances by Chain</CardTitle>
+                <CardDescription className="text-xs">
                   View and deposit USDC on individual chains
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-1.5">
                   {SUPPORTED_CHAINS.map((chainConfig) => {
                     const chainBalance = balances.find(b => b.domain === chainConfig.domain)
                     const walletBalance = chainBalance?.walletBalance || '0'
@@ -293,37 +293,37 @@ const Gateway = () => {
                     return (
                       <div
                         key={chainConfig.name}
-                        className="flex items-center justify-between p-4 border rounded-lg"
+                        className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{chainConfig.name}</h3>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-xs font-semibold truncate">{chainConfig.name}</h3>
                             {!chainConfig.supportsGateway && (
-                              <span className="text-xs bg-muted px-2 py-1 rounded">
-                                Gateway N/A
+                              <span className="text-[9px] bg-muted px-1 py-0.5 rounded whitespace-nowrap">
+                                N/A
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-[10px] text-muted-foreground">
                             Domain: {chainConfig.domain}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
                           <div className="text-right">
                             {isLoading ? (
-                              <p className="text-sm text-muted-foreground">Loading...</p>
+                              <p className="text-[10px] text-muted-foreground">Loading...</p>
                             ) : (
-                              <>
-                                <div className="mb-1">
-                                  <p className="text-xs text-muted-foreground">Wallet</p>
-                                  <p className="font-semibold">{parseFloat(walletBalance).toFixed(6)} USDC</p>
+                              <div className="space-y-0.5">
+                                <div className="flex items-baseline gap-1">
+                                  <p className="text-[9px] text-muted-foreground">W:</p>
+                                  <p className="text-xs font-medium">{parseFloat(walletBalance).toFixed(2)}</p>
                                 </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground">Gateway</p>
-                                  <p className="font-semibold text-primary">{parseFloat(gatewayBalance).toFixed(6)} USDC</p>
+                                <div className="flex items-baseline gap-1">
+                                  <p className="text-[9px] text-muted-foreground">G:</p>
+                                  <p className="text-xs font-medium text-primary">{parseFloat(gatewayBalance).toFixed(2)}</p>
                                 </div>
-                              </>
+                              </div>
                             )}
                           </div>
 
@@ -341,9 +341,9 @@ const Gateway = () => {
                               }}
                             >
                               <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Wallet className="h-4 w-4 mr-2" />
-                                  Deposit
+                                <Button variant="outline" size="sm" className="h-7 px-2 text-xs">
+                                  <Wallet className="h-3 w-3 sm:mr-1" />
+                                  <span className="hidden sm:inline">Deposit</span>
                                 </Button>
                               </DialogTrigger>
                               <DialogContent>
@@ -401,9 +401,9 @@ const Gateway = () => {
                   })}
                 </div>
 
-                <Alert className="mt-6">
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
+                <Alert className="mt-3">
+                  <Info className="h-3 w-3" />
+                  <AlertDescription className="text-xs">
                     Get test USDC from{' '}
                     <a
                       href="https://faucet.circle.com"
@@ -421,9 +421,9 @@ const Gateway = () => {
             {/* Transaction Status */}
             {txHash && (
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle>Transaction Status</CardTitle>
+                    <CardTitle className="text-base">Transaction Status</CardTitle>
                     <Button variant="ghost" size="sm" onClick={clearTransaction}>
                       Clear
                     </Button>
@@ -432,13 +432,13 @@ const Gateway = () => {
                 <CardContent>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <Label className="text-sm font-semibold text-green-600">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <Label className="text-xs font-semibold text-green-600">
                         Transaction Confirmed!
                       </Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all">
+                      <code className="flex-1 text-[10px] bg-muted px-2 py-1.5 rounded font-mono break-all">
                         {txHash}
                       </code>
                       <Button
@@ -446,7 +446,7 @@ const Gateway = () => {
                         size="sm"
                         onClick={() => copyToClipboard(txHash, 'Transaction Hash')}
                       >
-                        <Copy className="h-4 w-4" />
+                        <Copy className="h-3 w-3" />
                       </Button>
                     </div>
                   </div>
@@ -456,27 +456,27 @@ const Gateway = () => {
 
             {/* Info Section */}
             <Card>
-              <CardHeader>
-                <CardTitle>How Circle Gateway Works</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">How Circle Gateway Works</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-1.5">
                 <div>
-                  <h4 className="font-semibold mb-2">Unified USDC Balance</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-0.5 text-xs">Unified USDC Balance</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Circle Gateway provides a single, unified USDC balance across all supported chains.
                     You can deposit on any chain and spend from your total balance.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2">Fast Cross-Chain Transfers</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-0.5 text-xs">Fast Cross-Chain Transfers</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Transfers complete in under 500ms once your balance is established. The Gateway
                     automatically routes funds from multiple source chains if needed.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2">Low Fees</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="font-semibold mb-0.5 text-xs">Low Fees</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
                     Pay only 0.005% transfer fee plus base gas costs. No complex bridging required.
                   </p>
                 </div>

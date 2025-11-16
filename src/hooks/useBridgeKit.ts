@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { createAdapterFromProvider, ViemAdapter } from '@circle-fin/adapter-viem-v2';
-import { BridgeKit, ChainDefinition, } from '@circle-fin/bridge-kit';
-import { type EIP1193Provider, createPublicClient, createWalletClient, http, parseAbi, type Chain, custom } from 'viem';
+import { BridgeKit, BridgeParams, ChainDefinition, } from '@circle-fin/bridge-kit';
+import { type EIP1193Provider, createPublicClient, createWalletClient, http, parseAbi, type Chain, custom, EIP1193RequestFn } from 'viem';
 import { sepolia, baseSepolia, arbitrumSepolia, mainnet } from 'viem/chains';
 import { arcTestnet } from 'wagmi/chains';
 import type { SmartAccount } from 'viem/account-abstraction';
@@ -134,6 +134,49 @@ interface UseBridgeKitOptions {
   smartAccount?: SmartAccount | null; // Optional smart account instance for signing transactions
 }
 
+export interface CostEstimate {
+  chainId: number;
+  chainName: string;
+  gasFee: string;
+  providerFee: string;
+  totalFee: string;
+  isLoading: boolean;
+  error?: string;
+}
+
+// Source chains that can bridge to Arc Testnet
+export const SOURCE_CHAINS = [
+  { id: SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[SEPOLIA_CHAIN_ID] },
+  { id: BASE_SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[BASE_SEPOLIA_CHAIN_ID] },
+  { id: ARBITRUM_SEPOLIA_CHAIN_ID, name: CHAIN_NAMES[ARBITRUM_SEPOLIA_CHAIN_ID] },
+];
+
+
+async function createAdapter(smartAccount?: SmartAccount | null): Promise<ViemAdapter | null> {
+  if (!smartAccount) return null;
+
+  console.log('✅ Creating adapter from Circle Smart Account...');
+  console.log('📍 Smart Account address:', smartAccount.address);
+
+  // Create a provider fully matching EIP-1193 expected types
+  const provider: EIP1193Provider = {
+    on: (_event: string, _listener: (...args: any[]) => void) => { /* no-op */ },
+    removeListener: (_event: string, _listener: (...args: any[]) => void) => { /* no-op */ },
+    request: (async (args: { method: string; params?: unknown }): Promise<unknown> => {
+      const { method } = args;
+      switch (method) {
+        case 'eth_accounts':
+        case 'eth_requestAccounts':
+          return [smartAccount.address];
+        default:
+          throw new Error(`Unsupported method: ${method}`);
+      }
+    }) as EIP1193RequestFn,
+  };
+
+  return await createAdapterFromProvider({ provider });
+}
+
 export function useBridgeKit(options?: UseBridgeKitOptions) {
   const { address: wagmiAddress, isConnected: wagmiConnected, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -228,6 +271,112 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
     });
   }, []);
 
+  // Estimate costs for all bridge routes
+  const estimateCosts = useCallback(
+    async (amount: string): Promise<CostEstimate[]> => {
+      if (!amount || parseFloat(amount) <= 0) {
+        throw new Error('Invalid amount');
+      }
+
+      const estimates: CostEstimate[] = SOURCE_CHAINS.map(chain => ({
+        chainId: chain.id,
+        chainName: chain.name,
+        gasFee: '...',
+        providerFee: '...',
+        totalFee: '...',
+        isLoading: true,
+      }));
+
+      try {
+        if (!bridgeKitInstance) {
+          bridgeKitInstance = new BridgeKit();
+        }
+
+        // Create adapter using the reusable function
+        const adapter = await createAdapter(options?.smartAccount);
+        const supportedChains = bridgeKitInstance.getSupportedChains();
+
+        // Estimate costs for each source chain
+        const estimatePromises = SOURCE_CHAINS.map(async (chain) => {
+          try {
+            // Find source and destination chains in Bridge Kit
+            let sourceChain = supportedChains.find((c: any) => {
+              const isEVM = 'chainId' in c;
+              if (!isEVM) return false;
+              return c.chainId === chain.id;
+            });
+
+            // Fallback: search by name
+            if (!sourceChain) {
+              const chainName = CHAIN_NAMES[chain.id];
+              if (chainName) {
+                const searchTerms = chainName.toLowerCase().split(' ');
+                sourceChain = supportedChains.find((c: any) => {
+                  const name = c.name.toLowerCase();
+                  return searchTerms.some(term => name.includes(term));
+                });
+              }
+            }
+
+            let destChain = supportedChains.find((c: any) => {
+              const isEVM = 'chainId' in c;
+              if (!isEVM) return false;
+              return c.chainId === ARC_CHAIN_ID;
+            });
+
+            // Fallback for Arc
+            if (!destChain) {
+              destChain = supportedChains.find((c: any) => c.name.toLowerCase().includes('arc'));
+            }
+
+            if (!sourceChain || !destChain) {
+              throw new Error(`Bridge route not supported`);
+            }
+
+            const params = {
+              from: { adapter, chain: sourceChain.chain },
+              to: { adapter, chain: destChain.chain },
+              amount: amount,
+            };
+
+            const estimate = await bridgeKitInstance.estimate(params);
+
+            const gasFee = estimate.fees.find((f: any) => f.type === 'gas')?.amount || '0';
+            const providerFee = estimate.fees.find((f: any) => f.type === 'provider')?.amount || '0';
+            const total = (parseFloat(gasFee) + parseFloat(providerFee)).toFixed(6);
+
+            return {
+              chainId: chain.id,
+              chainName: chain.name,
+              gasFee: `${gasFee} USDC`,
+              providerFee: `${providerFee} USDC`,
+              totalFee: `${total} USDC`,
+              isLoading: false,
+            };
+          } catch (error: any) {
+            console.error(`Failed to estimate for ${chain.name}:`, error);
+            return {
+              chainId: chain.id,
+              chainName: chain.name,
+              gasFee: 'N/A',
+              providerFee: 'N/A',
+              totalFee: 'N/A',
+              isLoading: false,
+              error: error.message?.includes('not supported') ? 'Route not supported' : 'Failed to estimate',
+            };
+          }
+        });
+
+        const results = await Promise.all(estimatePromises);
+        return results;
+      } catch (error) {
+        console.error('Failed to estimate costs:', error);
+        throw error;
+      }
+    },
+    [options?.smartAccount]
+  );
+
   const bridge = useCallback(
     async (token: BridgeToken, amount: string, sourceChainId: number, destinationChainId: number, recipientAddress?: string) => {
       if (!isConnected || !address) {
@@ -264,50 +413,11 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           bridgeKitInstance = new BridgeKit();
         }
 
-        // --- CREATE ADAPTER: Smart Account or MetaMask ---
-        let adapter;
-
-        // Use Circle Smart Account with gasless transactions
-        console.log('✅ Creating adapter from Circle Smart Account...');
-        console.log('📍 Smart Account address:', options.smartAccount.address);
-
-        // Get Circle client credentials from environment
-        const clientKey = import.meta.env.VITE_CLIENT_KEY as string;
-        const clientUrl = import.meta.env.VITE_CLIENT_URL as string;
-
-        // Helper to get chain path for Circle's transport
-        const getChainPath = (chainId: number): string => {
-          switch (chainId) {
-            case SEPOLIA_CHAIN_ID:
-              return 'sepolia';
-            case BASE_SEPOLIA_CHAIN_ID:
-              return 'baseSepolia';
-            case ARBITRUM_SEPOLIA_CHAIN_ID:
-              return 'arbitrumSepolia';
-            case ARC_CHAIN_ID:
-              return 'arc';
-            default:
-              throw new Error(`Unsupported chain ID for Circle Smart Account: ${chainId}`);
-          }
-        };
-
-        // Helper to get viem chain object
-        const getViemChain = (chainId: number) => {
-          switch (chainId) {
-            case SEPOLIA_CHAIN_ID:
-              return sepolia;
-            case BASE_SEPOLIA_CHAIN_ID:
-              return baseSepolia;
-            case ARBITRUM_SEPOLIA_CHAIN_ID:
-              return arbitrumSepolia;
-            case ARC_CHAIN_ID:
-              return arcTestnet;
-            default:
-              throw new Error(`Unsupported chain ID: ${chainId}`);
-          }
-        };
-
+        // --- CREATE ADAPTER: Use reusable function ---
         console.log(`🌉 Bridging ${amount} ${token} from ${CHAIN_NAMES[sourceChainId]} to ${CHAIN_NAMES[destinationChainId]}`);
+
+        const adapter = await createAdapter(options?.smartAccount);
+        console.log('✅ Adapter created successfully');
 
         // Get supported chains from Bridge Kit
         const supportedChains = bridgeKitInstance.getSupportedChains();
@@ -400,25 +510,6 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           throw new Error(`Destination chain ${CHAIN_NAMES[destinationChainId]} (${destinationChainId}) not found in Bridge Kit`);
         }
 
-        const client = createWalletClient({
-          chain: mainnet,
-          transport: custom(window.ethereum!)
-        })
-
-        const { account } = useCircleSmartAccount();
-
-        // Create custom ViemAdapter for Smart Account
-        adapter = await createAdapterFromProvider({
-          provider: {
-            ...account,
-            on: () => { },
-            removeListener: () => { },
-            request: client.request,
-          },
-        });
-
-        console.log('✅ Smart Account adapter created successfully');
-
         // Switch to source chain if needed (only for EOA wallets, not Smart Accounts)
         if (!options?.smartAccount && chainId !== sourceChainId && switchChain) {
           console.log('🦊 Switching chain for EOA wallet...');
@@ -448,7 +539,7 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
           console.log(`📍 Recipient address: ${recipientAddress}`);
         }
 
-        const bridgeParams = {
+        const bridgeParams: BridgeParams = {
           from: {
             adapter: adapter,
             chain: sourceChain.chain,
@@ -463,17 +554,7 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
 
         console.log(`📦 Bridge parameters:`, JSON.stringify(bridgeParams, null, 2));
 
-        const result = await bridgeKitInstance.bridge({
-          from: {
-            adapter: adapter,
-            chain: "Base_Sepolia",
-          },
-          to: {
-            adapter: adapter,
-            chain: "Arc_Testnet",
-          },
-          amount: amount,
-        });
+        const result = await bridgeKitInstance.bridge(bridgeParams);
 
         console.log('✅ Bridge result:', result);
         console.log('✅ Bridge state:', result.state);
@@ -574,5 +655,6 @@ export function useBridgeKit(options?: UseBridgeKitOptions) {
     fetchTokenBalance,
     bridge,
     reset,
+    estimateCosts,
   };
 }

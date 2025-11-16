@@ -6,7 +6,7 @@ export function CircleAccountButton() {
   const navigate = useNavigate();
 
   const handleNavigate = () => {
-    navigate("/circle-account");
+    navigate("/account");
   };
 
   return (
