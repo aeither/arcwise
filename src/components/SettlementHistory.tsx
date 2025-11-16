@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { arbitrumSepolia, arcTestnet, baseSepolia, sepolia, avalancheFuji } from "viem/chains";
 
 export interface Settlement {
   id: string;
@@ -11,7 +12,45 @@ export interface Settlement {
   txHash: string;
   timestamp: Date;
   chain: string;
+  chainId?: number; // Optional for backwards compatibility
 }
+
+// Map chain names to chain IDs for backward compatibility
+const getChainIdFromName = (chainName: string): number => {
+  if (chainName.includes('Base Sepolia')) return baseSepolia.id;
+  if (chainName.includes('Arc Testnet')) return arcTestnet.id;
+  if (chainName.includes('Arbitrum Sepolia')) return arbitrumSepolia.id;
+  if (chainName.includes('Avalanche Fuji')) return avalancheFuji.id;
+  if (chainName.includes('Sepolia')) return sepolia.id;
+  return baseSepolia.id; // Default fallback
+};
+
+// Get block explorer URL for a chain
+const getExplorerUrl = (chainId: number, txHash: string): string => {
+  let chain;
+  switch (chainId) {
+    case sepolia.id:
+      chain = sepolia;
+      break;
+    case baseSepolia.id:
+      chain = baseSepolia;
+      break;
+    case arbitrumSepolia.id:
+      chain = arbitrumSepolia;
+      break;
+    case arcTestnet.id:
+      chain = arcTestnet;
+      break;
+    case avalancheFuji.id:
+      chain = avalancheFuji;
+      break;
+    default:
+      chain = baseSepolia; // Fallback
+  }
+
+  const explorerUrl = chain.blockExplorers?.default?.url || 'https://etherscan.io';
+  return `${explorerUrl}/tx/${txHash}`;
+};
 
 interface SettlementHistoryProps {
   settlements: Settlement[];
@@ -72,11 +111,8 @@ export function SettlementHistory({ settlements }: SettlementHistoryProps) {
                 size="icon"
                 className="h-7 w-7 sm:h-8 sm:w-8 shrink-0"
                 onClick={() => {
-                  const explorerUrl = settlement.chain.includes('Sepolia') 
-                    ? `https://sepolia.etherscan.io/tx/${settlement.txHash}`
-                    : settlement.chain.includes('Base')
-                    ? `https://basescan.org/tx/${settlement.txHash}`
-                    : `https://etherscan.io/tx/${settlement.txHash}`;
+                  const chainId = settlement.chainId || getChainIdFromName(settlement.chain);
+                  const explorerUrl = getExplorerUrl(chainId, settlement.txHash);
                   window.open(explorerUrl, '_blank');
                 }}
               >

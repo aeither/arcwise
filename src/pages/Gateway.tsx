@@ -27,6 +27,13 @@ import {
 } from '@/components/ui/dialog'
 import { ArrowUpDown, Wallet, RefreshCw, ArrowRightLeft, Info, Copy, CheckCircle } from 'lucide-react'
 
+// Demo contacts - same as in CircleAccount.tsx and Index.tsx
+const CONTACTS = [
+  { name: 'Olivia', address: '0x742D35CC6634c0532925A3b844BC9E7595F0BEb0' },
+  { name: 'Juan', address: '0xdD2FD4581271e230360230F9337D5c0430Bf44C0' },
+  { name: 'Lucas', address: '0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199' },
+]
+
 const Gateway = () => {
   const [searchParams] = useSearchParams()
   const { account, credential, username } = useCircleSmartAccount()
@@ -59,6 +66,7 @@ const Gateway = () => {
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [selectedTransferChain, setSelectedTransferChain] = useState<GatewayChainConfig | null>(null)
   const [transferAmount, setTransferAmount] = useState('')
+  const [selectedContact, setSelectedContact] = useState<string>('')
   const [recipientAddress, setRecipientAddress] = useState('')
 
   const handleDeposit = async () => {
@@ -115,6 +123,7 @@ const Gateway = () => {
       })
       setTransferDialogOpen(false)
       setTransferAmount('')
+      setSelectedContact('')
       setRecipientAddress('')
     } catch (err) {
       toast({
@@ -122,6 +131,18 @@ const Gateway = () => {
         description: err instanceof Error ? err.message : 'Please try again',
         variant: 'destructive',
       })
+    }
+  }
+
+  const handleContactSelect = (contactName: string) => {
+    setSelectedContact(contactName)
+    if (contactName === 'custom') {
+      setRecipientAddress('')
+    } else {
+      const contact = CONTACTS.find(c => c.name === contactName)
+      if (contact) {
+        setRecipientAddress(contact.address)
+      }
     }
   }
 
@@ -244,13 +265,36 @@ const Gateway = () => {
                         </div>
 
                         <div>
+                          <Label htmlFor="contact">Select Contact</Label>
+                          <Select value={selectedContact} onValueChange={handleContactSelect}>
+                            <SelectTrigger id="contact">
+                              <SelectValue placeholder="Choose a contact or enter custom address" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CONTACTS.map((contact) => (
+                                <SelectItem key={contact.name} value={contact.name}>
+                                  {contact.name} ({contact.address.slice(0, 6)}...{contact.address.slice(-4)})
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="custom">Custom address</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
                           <Label htmlFor="transfer-recipient">Recipient Address</Label>
                           <Input
                             id="transfer-recipient"
                             type="text"
                             placeholder="0x..."
                             value={recipientAddress}
-                            onChange={(e) => setRecipientAddress(e.target.value)}
+                            onChange={(e) => {
+                              setRecipientAddress(e.target.value)
+                              if (selectedContact !== 'custom') {
+                                setSelectedContact('custom')
+                              }
+                            }}
+                            disabled={isLoading || (selectedContact !== '' && selectedContact !== 'custom')}
                           />
                         </div>
 

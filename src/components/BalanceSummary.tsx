@@ -13,22 +13,24 @@ interface Balance {
 
 interface BalanceSummaryProps {
   balances: Balance[];
-  onSettle: (from: string, to: string, amount: number, txHash: string, chain: string) => void;
+  onSettle: (from: string, to: string, amount: number, txHash: string, chain: string, chainId: number) => void;
   walletAddresses: Record<string, string>;
   chainId?: number;
 }
 
 export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 84532 }: BalanceSummaryProps) {
-  const { account, credential, sendUSDC, isLoading, txHash, currentChainName } = useCircleSmartAccount(chainId);
+  const { account, credential, sendUSDC, isLoading, txHash, currentChainName, currentChainId } = useCircleSmartAccount(chainId);
+  const arcAccount = useCircleSmartAccount(5042002); // Arc Testnet for fallback
   const { toast } = useToast();
   const [pendingSettlement, setPendingSettlement] = useState<string | null>(null);
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
+  const [isRetryingOnArc, setIsRetryingOnArc] = useState(false);
 
-  // Handle successful transaction
+  // Handle successful transaction from primary chain
   useEffect(() => {
-    if (txHash && txHash !== lastTxHash && pendingSettlement) {
+    if (txHash && txHash !== lastTxHash && pendingSettlement && !isRetryingOnArc) {
       const [from, to, amount] = pendingSettlement.split('|');
-      onSettle(from, to, parseFloat(amount), txHash, currentChainName);
+      onSettle(from, to, parseFloat(amount), txHash, currentChainName, currentChainId);
       setPendingSettlement(null);
       setLastTxHash(txHash);
 
@@ -38,7 +40,24 @@ export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 
         duration: 4000,
       });
     }
-  }, [txHash, lastTxHash, pendingSettlement, onSettle, toast, currentChainName]);
+  }, [txHash, lastTxHash, pendingSettlement, onSettle, toast, currentChainName, isRetryingOnArc]);
+
+  // Handle successful transaction from Arc Testnet fallback
+  useEffect(() => {
+    if (arcAccount.txHash && arcAccount.txHash !== lastTxHash && pendingSettlement && isRetryingOnArc) {
+      const [from, to, amount] = pendingSettlement.split('|');
+      onSettle(from, to, parseFloat(amount), arcAccount.txHash, arcAccount.currentChainName, arcAccount.currentChainId);
+      setPendingSettlement(null);
+      setLastTxHash(arcAccount.txHash);
+      setIsRetryingOnArc(false);
+
+      toast({
+        title: "Payment successful! 🎉",
+        description: `${from} paid ${to} $${parseFloat(amount).toFixed(2)} USDC on ${arcAccount.currentChainName}`,
+        duration: 4000,
+      });
+    }
+  }, [arcAccount.txHash, lastTxHash, pendingSettlement, onSettle, toast, arcAccount.currentChainName, isRetryingOnArc]);
 
   const handleSettleUp = async (balance: Balance) => {
     if (!credential || !account) {
@@ -70,12 +89,64 @@ export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 
 
       await sendUSDC(recipientAddress as `0x${string}`, balance.amount.toString());
     } catch (error) {
-      setPendingSettlement(null);
-      toast({
-        title: "Transaction failed",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      
+      // Check if error is due to insufficient balance
+      const isInsufficientBalance = errorMessage.includes("transfer amount exceeds balance") || 
+                                    errorMessage.includes("insufficient");
+      
+      if (isInsufficientBalance && chainId !== 5042002 && !isRetryingOnArc) {
+        // Automatically retry on Arc Testnet
+        try {
+          setIsRetryingOnArc(true);
+          toast({
+            title: "Insufficient balance on " + currentChainName,
+            description: "Retrying on Arc Testnet...",
+          });
+
+          await arcAccount.sendUSDC(recipientAddress as `0x${string}`, balance.amount.toString());
+        } catch (arcError) {
+          setPendingSettlement(null);
+          setIsRetryingOnArc(false);
+          
+          const arcErrorMessage = arcError instanceof Error ? arcError.message : "Unknown error";
+          const arcInsufficientBalance = arcErrorMessage.includes("transfer amount exceeds balance") || 
+                                         arcErrorMessage.includes("insufficient");
+          
+          if (arcInsufficientBalance) {
+            toast({
+              title: "Insufficient balance",
+              description: "Please get test USDC from the faucet or try another chain. You can switch chains by going to the Bridge page.",
+              variant: "destructive",
+              duration: 6000,
+            });
+          } else {
+            toast({
+              title: "Transaction failed on Arc Testnet",
+              description: arcErrorMessage,
+              variant: "destructive",
+            });
+          }
+        }
+      } else {
+        setPendingSettlement(null);
+        setIsRetryingOnArc(false);
+        
+        if (isInsufficientBalance) {
+          toast({
+            title: "Insufficient balance",
+            description: "Please get test USDC from the faucet or try another chain. You can switch chains by going to the Bridge page.",
+            variant: "destructive",
+            duration: 6000,
+          });
+        } else {
+          toast({
+            title: "Transaction failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
   if (balances.length === 0) {
@@ -105,7 +176,7 @@ export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 
       </CardHeader>
       <CardContent className="space-y-2 sm:space-y-3 p-3 sm:p-6 pt-0">
         {balances.map((balance, index) => {
-          const isPending = isLoading && pendingSettlement === `${balance.from}|${balance.to}|${balance.amount}`;
+          const isPending = (isLoading || (isRetryingOnArc && arcAccount.isLoading)) && pendingSettlement === `${balance.from}|${balance.to}|${balance.amount}`;
 
           return (
             <div
@@ -131,7 +202,7 @@ export function BalanceSummary({ balances, onSettle, walletAddresses, chainId = 
                   {isPending ? (
                     <>
                       <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 animate-spin" />
-                      <span className="hidden xs:inline">Sending...</span>
+                      <span className="hidden xs:inline">{isRetryingOnArc ? "Retrying..." : "Sending..."}</span>
                       <span className="xs:hidden">...</span>
                     </>
                   ) : (

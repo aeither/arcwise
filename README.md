@@ -1,42 +1,45 @@
 # ArcWise
 
-Split expenses with friends, settle with crypto.
+The easiest way to split expenses and pay friends on Arc. Send cross-chain USDC instantly, settle group costs with one tap, and manage your crypto payments all without bringing your own wallet. Built for Arc, ready for real-world finance.
 
-Send cross-chain USDC to friends and split expenses seamlessly across blockchain networks.
+## Problem
+
+Cross-chain payments are complex, requiring users to manage multiple wallets, understand bridge mechanics, and handle gas fees across different networks. Traditional expense splitting apps lack on-chain settlement, making it difficult to pay friends and settle group costs with crypto.
+
+## Solution
+
+ArcWise provides a seamless cross-chain USDC payment experience with embedded wallets, eliminating the need for users to bring their own wallet. Built on Arc and ready for real-world finance, ArcWise makes it easy to pay friends and settle group costs across multiple chains.
 
 ## Features
 
-### Send Cross-Chain USDC to Friends
-Transfer USDC between supported testnet chains to Arc Testnet using Circle's Bridge Kit. Perfect for sending money to friends across different networks:
-- Ethereum Sepolia → Arc Testnet
-- Base Sepolia → Arc Testnet
-- Arbitrum Sepolia → Arc Testnet
+### Cross-Chain USDC Transfers
+- **Bridge Kit Integration**: Move USDC across multiple chains easily (Ethereum Sepolia, Base Sepolia, Arbitrum Sepolia → Arc Testnet)
+- **Automatic Route Optimization**: Finds the cheapest route automatically
+- **Real-time Fee Estimation**: See costs before you send
+- **Easy Payments**: Send to friends using Farcaster usernames or wallet addresses
 
-Features include:
-- Automatic cheapest route finder
-- Fee estimation across all routes
-- Send to different wallet addresses
-- Real-time balance tracking
+### Embedded Wallet Experience
+- **No Wallet Required**: Get started instantly without bringing your own wallet
+- **Gateway Integration**: Unified USDC balance management across all chains
+- **Gasless Transactions**: Send USDC on all supported chains without native tokens
+- **Passkey Security**: Biometric authentication, no seed phrases or private keys
 
 ### Expense Splitting
-Track shared expenses and calculate who owes what. Settle debts with on-chain USDC transfers across multiple networks.
+- Track shared expenses and calculate who owes what
+- Settle debts with on-chain USDC transfers
+- Best mobile experience for on-the-go expense management
 
-### Circle Smart Account
-Create a smart account using your device's biometric authentication touch ID
-- No seed phrases or private keys
-- Gasless USDC transfers on Base Sepolia
-- Secured by passkey technology
+## Built on Arc
 
-### Farcaster Integration
-Resolve Ethereum addresses using Farcaster usernames for easier transfers.
+ArcWise is built on Arc, ready for real-world finance. The platform leverages Circle's Bridge Kit for seamless cross-chain USDC transfers and Circle Gateway for unified balance management, enabling instant access to funds across all supported chains.
 
 ## Challenge Explanation
 
 ### Best Cross-Chain USDC Experience with Circle's Bridge Kit and Arc
-ArcWise leverages Circle's Bridge Kit to provide a seamless cross-chain USDC transfer experience. Users can send USDC from Ethereum Sepolia, Base Sepolia, and Arbitrum Sepolia to Arc Testnet with automatic route optimization. The app automatically finds the cheapest route, estimates fees across all available routes, and provides real-time balance tracking. This makes sending USDC to friends across different networks as simple as a few clicks, without needing to understand the underlying bridge mechanics.
+ArcWise delivers the simplest cross-chain USDC experience on Arc. Users send USDC from Ethereum Sepolia, Base Sepolia, and Arbitrum Sepolia to Arc Testnet with automatic route optimization—no bridge mechanics to understand. The app finds the cheapest route, estimates fees upfront, and tracks balances in real-time, making cross-chain payments as easy as sending a text.
 
-### Best Stablecoin Embedded Wallet Experience with Circle Wallets, CCTP, Gateway & Arc
-ArcWise integrates Circle Modular Wallets to deliver a superior embedded wallet experience. Users can create smart accounts secured by passkey technology (biometric authentication) without managing seed phrases or private keys. The wallet supports gasless USDC transfers on Base Sepolia, making it accessible to users who may not have native tokens for gas fees. ArcWise leverages Circle Gateway, which allows users to deposit USDC to non-custodial smart contracts on any supported source chain to create a unified USDC balance. Once deposits are finalized, the Gateway system provides an attestation with a single API call that enables instant USDC minting on destination chains, allowing next-block access to the full balance. Combined with Farcaster username resolution, users can send USDC to friends using familiar usernames instead of long wallet addresses, creating a social-first payment experience.
+### Best Stablecoin Embedded Wallet Experience with Circle Wallets, Gateway & Arc
+ArcWise combines Circle Modular Wallets and Gateway to create a seamless embedded wallet experience on Arc. Users get started instantly with passkey authentication—no seed phrases or private keys. Gateway provides unified USDC balance management across all chains with instant access to funds. Gasless transactions on all supported chains mean users never need native tokens. Combined with Farcaster username resolution, paying friends becomes as simple as using a social app.
 
 ## Submission Details
 
@@ -58,6 +61,41 @@ The application was built using React, TypeScript, and Vite for the frontend, wi
 - Passkey-based authentication eliminating seed phrase management
 - Gasless transfers on supported networks
 - Social integration via Farcaster for user-friendly addressing
+
+## Building on Arc: Feedback & Learnings
+
+### Problems Encountered
+
+**Wallets:**
+- Wallets don't deploy immediately to all chains—had to figure out actions and wait times for wallets to be enabled on different chains
+
+**Gateway:**
+- UX heavily influenced by finality times—on Ethereum very slow, on Arc it's fast for funds to be available
+
+**Bridge Kit:**
+- Could be more compatible with Circle ecosystem—no guide or documentation on how to implement Bridge Kit with Wallets for cross-chain gasless in-app wallet experience
+
+**Arc:**
+- Some confusion around implementation details, for instance USDC decimals
+
+### Tools & Features We Wish Arc Had
+
+- Easier Bridge Kit compatibility with Wallets for seamless integration
+- Instant currency arrival on destination for unified balance with Gateway
+- Lower transaction costs—Arc could be cheaper, not much better in tx cost compared to ETH L2s
+
+### General Feedback
+
+**Documentation:**
+- Docs are good overall
+
+**Circle Passkeys:**
+- Problem with Circle passkeys domain configuration—can only set one domain, need ability to set multiple domains for multiple projects
+
+### Bridge Kit Feature Requests
+
+- Support for other major L1s like Sui, Aptos, Near
+- Bebop-like functionality: multiple chain to one chain or one chain to multiple chain in a single bridge transaction
 
 ## Setup
 
@@ -96,6 +134,7 @@ npm run build
 
 - React + TypeScript + Vite
 - Circle Bridge Kit - Cross-chain USDC transfers
-- Circle Modular Wallets - Passkey-based smart accounts
+- Circle Gateway - Unified USDC balance management
+- Circle Modular Wallets - Passkey-based embedded wallets
 - RainbowKit + Wagmi - Wallet connections
 - Shadcn UI + Tailwind CSS - Interface

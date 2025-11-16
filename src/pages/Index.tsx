@@ -124,7 +124,7 @@ const Index = () => {
     });
   };
 
-  const handleSettle = (from: string, to: string, amount: number, txHash: string, chain: string) => {
+  const handleSettle = (from: string, to: string, amount: number, txHash: string, chain: string, chainId: number) => {
     const newSettlement: Settlement = {
       id: Date.now().toString(),
       from,
@@ -132,6 +132,7 @@ const Index = () => {
       amount,
       txHash,
       chain,
+      chainId,
       timestamp: new Date(),
     };
     setSettlements([newSettlement, ...settlements]);
